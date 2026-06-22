@@ -126,11 +126,7 @@ function completeEndJourney() {
 }
 
 function checkJourneyMilestone(successCount, suppressUI = false) {
-    const milestones = [30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000];
-    if (milestones.includes(successCount)) {
-        if (successCount >= 75) {
-            state.journeyMilestones[successCount] = (state.journeyMilestones[successCount] || 0) + 1;
-        }
-        if (!suppressUI) triggerJourneyMilestone(successCount);
-    }
+    if (!JOURNEY_MILESTONES[successCount]) return;
+    state.journeyMilestones[successCount] = (state.journeyMilestones[successCount] || 0) + 1;
+    if (!suppressUI) triggerJourneyMilestone(successCount);
 }

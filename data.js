@@ -59,7 +59,7 @@ const JOURNEY_MILESTONES = {
 };
 
 // Success rate shown only at journey strong-day milestones
-const JOURNEY_SHOW_RATE = new Set([30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000]);
+const JOURNEY_SHOW_RATE = new Set([75, 100, 150, 200, 300, 400, 500, 750, 1000]);
 
 const BRAIN_PHASES = [
     {

@@ -45,18 +45,6 @@ function triggerStreakMilestone(streak) {
 }
 
 function triggerJourneyMilestone(days) {
-    // Day 30 and 50 — show success rate popup only, no full milestone card
-    if (days === 30 || days === 50) {
-        const r = getSuccessRate();
-        if (!r) return;
-        setTimeout(() => showCelebration({
-            emoji:   days === 30 ? '💪' : '⭐',
-            stage:   `${days} JOURNEY DAYS`,
-            title:   `${days} Strong Days!`,
-            message: `${r.success} strong days out of ${r.total} — you're at ${r.rate}% success rate. Not perfection. Progress.`,
-        }), 400);
-        return;
-    }
     if (JOURNEY_MILESTONES[days]) {
         const data = { ...JOURNEY_MILESTONES[days] };
         if (JOURNEY_SHOW_RATE.has(days)) {
