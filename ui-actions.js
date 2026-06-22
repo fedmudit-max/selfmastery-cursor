@@ -60,10 +60,18 @@ function closeModal() {
 }
 
 function confirmAction() {
-    if (pendingAction === 'success') recordSuccess();
-    else if (pendingAction === 'fail') recordFailure();
-    else if (pendingAction === 'reset') resetAll();
+    const action = pendingAction;
+    if (!action) return;
+    pendingAction = null;
+
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+
     closeModal();
+
+    if (action === 'success') recordSuccess();
+    else if (action === 'fail') recordFailure();
+    else if (action === 'reset') resetAll();
 }
 
 function resetAll() {
@@ -103,7 +111,13 @@ function handleStrongDayUI(result, suppressUI) {
     checkJourneyMilestone(result.successCount, false);
 }
 
+let lastSlipAt = 0;
+
 function recordFailure() {
+    const now = Date.now();
+    if (now - lastSlipAt < 800) return;
+    lastSlipAt = now;
+
     state.lastOpenedDate = todayKey();
     const failures = recordSlipToday();
     if (journeyIsOver(state)) {

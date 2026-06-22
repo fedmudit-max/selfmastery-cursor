@@ -18,7 +18,7 @@ function handleDataAction(e) {
 
     const action = btn.dataset.action;
     const now = Date.now();
-    if (btn === lastActionTap.btn && action === lastActionTap.action && now - lastActionTap.at < 450) return;
+    if (btn === lastActionTap.btn && action === lastActionTap.action && now - lastActionTap.at < 600) return;
     lastActionTap = { btn, action, at: now };
 
     const actions = {
@@ -49,7 +49,6 @@ function handleDataAction(e) {
 }
 
 document.addEventListener('click', handleDataAction, true);
-document.addEventListener('pointerup', handleDataAction, true);
 
 document.getElementById('celebrationOverlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'celebrationOverlay') closeCelebration();
