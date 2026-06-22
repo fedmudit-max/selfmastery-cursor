@@ -1,4 +1,4 @@
-const CACHE_NAME = 'king-v10';
+const CACHE_NAME = 'king-v11';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './logic.js', './data.js', './manifest.json'];
 
 self.addEventListener('install', (event) => {

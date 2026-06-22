@@ -1140,6 +1140,7 @@ function checkNewDay() {
 
     const diffDays = daysBetweenKeys(state.lastOpenedDate, today);
 
+    // One day missed and not logged — ask about yesterday
     if (diffDays === 1 && state.todayStatus === 'none') {
         const reminder = document.getElementById('reminderOverlay');
         if (!reminder.classList.contains('active')) {
@@ -1148,22 +1149,47 @@ function checkNewDay() {
         return;
     }
 
-    if (diffDays > 1 && state.todayStatus === 'none') {
-        const gap = document.getElementById('gapReviewOverlay');
-        if (!gap.classList.contains('active')) {
-            showGapReviewPrompt(diffDays);
-        }
+    // One day passed and yesterday was already logged — roll calendar forward
+    if (diffDays === 1) {
+        advanceCalendarDay();
+        state.lastOpenedDate = today;
+        state.lastCheckedDate = today;
+        chartPage = -1;
+        saveToStorage(state);
+        renderAll();
         return;
     }
 
-    for (let i = 0; i < diffDays; i++) {
-        advanceCalendarDay();
+    // Multi-day absence — auto-count every missed day as strong
+    if (diffDays > 1) {
+        applyMultiDayCatchUp(today);
+        return;
     }
+}
+
+function applyMultiDayCatchUp(today) {
+    const outcome = autoStrongAbsentDays(today);
     state.lastOpenedDate = today;
     state.lastCheckedDate = today;
+
+    if (outcome.journeyEnded) {
+        chartPage = -1;
+        saveAndRender();
+        completeEndJourney();
+        return;
+    }
+
+    for (const { result, suppressUI } of outcome.results) {
+        handleStrongDayUI(result, suppressUI);
+    }
+
     chartPage = -1;
-    saveToStorage(state);
-    renderAll();
+    saveAndRender();
+
+    const last = outcome.results[outcome.results.length - 1];
+    if (last && !last.suppressUI && last.result) {
+        showToast(last.result.streak, 'Missed days counted as strong 💪');
+    }
 }
 
 function showGapReviewPrompt(diffDays) {
@@ -1177,14 +1203,7 @@ function showGapReviewPrompt(diffDays) {
 
 function confirmGapAllStrong() {
     document.getElementById('gapReviewOverlay').classList.remove('active');
-    const queue = buildGapDayQueue(state.lastOpenedDate, todayKey());
-    for (let idx = 0; idx < queue.length; idx++) {
-        const suppress = idx < queue.length - 1;
-        handleStrongDayUI(applyStrongDay({ logDate: queue[idx], suppressUI: suppress }), suppress);
-        if (journeyIsOver(state)) { completeEndJourney(); return; }
-        advanceCalendarDay();
-    }
-    finishGapCatchUp();
+    applyMultiDayCatchUp(todayKey());
 }
 
 function startGapDayByDay() {

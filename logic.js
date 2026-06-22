@@ -239,6 +239,51 @@ function buildGapDayQueue(lastOpenedDate, today) {
 }
 
 /**
+ * Multi-day absence: every missed wall-clock day counts as strong.
+ * Used when the user returns after 2+ days away.
+ * @returns {{ results: Array<{result: object, suppressUI: boolean}>, journeyEnded: boolean }}
+ */
+function autoStrongAbsentDays(today) {
+    today = today || todayKey();
+    const results = [];
+
+    if (!state.lastOpenedDate || state.lastOpenedDate === today) {
+        return { results, journeyEnded: false };
+    }
+
+    const diffDays = daysBetweenKeys(state.lastOpenedDate, today);
+    if (diffDays <= 1) {
+        return { results, journeyEnded: false };
+    }
+
+    // Last-opened day is strong if the user never logged it
+    if (state.todayStatus === 'none') {
+        const result = applyStrongDay({ logDate: state.lastOpenedDate, suppressUI: true });
+        results.push({ result, suppressUI: true });
+        if (journeyIsOver(state)) {
+            return { results, journeyEnded: true };
+        }
+    }
+
+    const queue = buildGapDayQueue(state.lastOpenedDate, today);
+    for (let i = 0; i < queue.length; i++) {
+        const dateKey = queue[i];
+        const isLast = i === queue.length - 1;
+
+        if (dateKey === today && state.todayStatus === 'failed') continue;
+
+        advanceCalendarDay();
+        const result = applyStrongDay({ logDate: dateKey, suppressUI: !isLast });
+        results.push({ result, suppressUI: !isLast });
+        if (journeyIsOver(state)) {
+            return { results, journeyEnded: true };
+        }
+    }
+
+    return { results, journeyEnded: false };
+}
+
+/**
  * Archive journey and reset for next attempt.
  * @returns comparison data for the UI popup
  */
