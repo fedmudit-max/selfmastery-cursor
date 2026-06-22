@@ -1,9 +1,0 @@
-{
-  "name": "king-nofap",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "test": "node --test tests/logic.test.js",
-    "serve": "python3 -m http.server 8080"
-  }
-}
