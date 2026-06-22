@@ -1,4 +1,4 @@
-const CACHE_NAME = 'king-v8';
+const CACHE_NAME = 'king-v9';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './logic.js', './data.js', './manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -21,3 +21,4 @@ self.addEventListener('fetch', (event) => {
         caches.match(event.request).then((cached) => cached || fetch(event.request))
     );
 });
+g
