@@ -1433,12 +1433,14 @@ function devAdvanceOneDay() {
         showToast(0, 'Finish onboarding first.');
         return;
     }
+
     advanceCalendarDay();
+
     state.lastOpenedDate  = todayKey();
     state.lastCheckedDate = todayKey();
     chartPage = -1;
     saveAndRender();
-    showToast(0, 'Test: next calendar day ⏭');
+    showToast(state.calendarDay, `Test: Day ${state.calendarDay} ⏭`);
 }
 
 // ════════════════════════════════════════════════════════
@@ -1485,7 +1487,7 @@ function handleDataAction(e) {
         urgeSurvived: urgeSurvived,
         closeUrge: closeUrge,
         closeCompare: closeCompare,
-        devNextDay: devAdvanceOneDay,
+        'dev-next-day': devAdvanceOneDay,
     };
     if (action === 'science-toggle' && arg !== undefined) toggleSciencePhase(Number(arg));
     else if (actions[action]) actions[action]();
