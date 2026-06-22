@@ -21,7 +21,6 @@ function handleDataAction(e) {
     if (btn === lastActionTap.btn && action === lastActionTap.action && now - lastActionTap.at < 450) return;
     lastActionTap = { btn, action, at: now };
 
-    const arg = btn.dataset.arg;
     const actions = {
         success: handleSuccess,
         'modal-fail': () => showModal('fail'),
@@ -46,8 +45,7 @@ function handleDataAction(e) {
         closeCompare: closeCompare,
         'dev-next-day': devAdvanceOneDay,
     };
-    if (action === 'science-toggle' && arg !== undefined) toggleSciencePhase(Number(arg));
-    else if (actions[action]) actions[action]();
+    if (actions[action]) actions[action]();
 }
 
 document.addEventListener('click', handleDataAction, true);
