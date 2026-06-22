@@ -707,24 +707,61 @@ function triggerJourneyMilestone(days) {
     }
 }
 
-function showCelebration({ emoji, stage, title, message }) {
+function showCelebration(data, opts = {}) {
+    celebrationQueue.push({
+        data,
+        autoCloseMs: opts.autoCloseMs || null,
+        onClose: opts.onClose || null,
+    });
+    if (!celebrationShowing) {
+        showNextCelebration();
+    }
+}
+
+function showNextCelebration() {
+    if (celebrationQueue.length === 0) {
+        celebrationShowing = false;
+        return;
+    }
+
+    celebrationShowing = true;
+    const item = celebrationQueue.shift();
+    celebrationOnClose = item.onClose || null;
+
+    const { emoji, stage, title, message } = item.data;
     document.getElementById('celebEmoji').textContent   = emoji;
     document.getElementById('celebStage').textContent   = stage;
     document.getElementById('celebTitle').textContent   = title;
     document.getElementById('celebMessage').textContent = message;
     document.getElementById('celebrationOverlay').classList.add('active');
     launchConfetti();
+
+    if (celebrationAutoCloseId) {
+        clearTimeout(celebrationAutoCloseId);
+        celebrationAutoCloseId = null;
+    }
+    if (item.autoCloseMs) {
+        celebrationAutoCloseId = setTimeout(() => {
+            celebrationAutoCloseId = null;
+            closeCelebration();
+        }, item.autoCloseMs);
+    }
 }
 
 function closeCelebration() {
     document.getElementById('celebrationOverlay').classList.remove('active');
     stopConfetti();
-    // If user dismissed the urge count popup manually, still launch the timer
-    if (urgePendingTimer) {
-        clearTimeout(urgePendingTimer);
-        urgePendingTimer = null;
-        launchUrgeTimer();
+
+    if (celebrationAutoCloseId) {
+        clearTimeout(celebrationAutoCloseId);
+        celebrationAutoCloseId = null;
     }
+
+    const onClose = celebrationOnClose;
+    celebrationOnClose = null;
+    if (onClose) onClose();
+
+    showNextCelebration();
 }
 
 // ════════════════════════════════════════════════════════
@@ -733,6 +770,11 @@ function closeCelebration() {
 
 let confettiParticles = [];
 let confettiAnimId    = null;
+
+let celebrationQueue       = [];
+let celebrationShowing     = false;
+let celebrationOnClose     = null;
+let celebrationAutoCloseId = null;
 
 function launchConfetti() {
     const canvas = document.getElementById('confettiCanvas');
@@ -809,7 +851,6 @@ let urgeSecsLeft  = URGE_DURATION_SECS;
 let urgeInterval   = null;
 let breathTimeout  = null;
 
-let urgePendingTimer = null;
 
 function startUrgeSurf() {
     // Log this urge with current hour for pattern analysis
@@ -824,14 +865,10 @@ function startUrgeSurf() {
             stage:   'URGE SURFER',
             title:   `${count} Urge${count !== 1 ? 's' : ''} Defeated`,
             message: `You've beaten ${count} urge${count !== 1 ? 's' : ''} before. You know how this ends — it passes. Let's go.`,
+        }, {
+            autoCloseMs: 2200,
+            onClose: () => launchUrgeTimer(),
         });
-        // Auto-launch timer after popup — cancelled if user dismisses early
-        if (urgePendingTimer) clearTimeout(urgePendingTimer);
-        urgePendingTimer = setTimeout(() => {
-            urgePendingTimer = null;
-            closeCelebration();
-            launchUrgeTimer();
-        }, 2200);
     } else {
         launchUrgeTimer();
     }
