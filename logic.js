@@ -221,6 +221,7 @@ function applySlipDay({ logDate, calDay }) {
 
 /** Slip for today — single path used by manual fail button. */
 function recordSlipToday() {
+    state.lastOpenedDate = todayKey();
     applySlipDay({ logDate: todayKey(), calDay: state.calendarDay });
     return state.score.failures;
 }
@@ -236,6 +237,65 @@ function buildGapDayQueue(lastOpenedDate, today) {
         queue.push(addDaysToKey(lastOpenedDate, i));
     }
     return queue;
+}
+
+/**
+ * Default-success model: unlogged wall-clock days count as strong.
+ * User only logs slips. Called on app open / day change.
+ * @returns {{ results: Array<{result: object, suppressUI: boolean}>, journeyEnded: boolean }}
+ */
+function catchUpElapsedDays(today) {
+    today = today || todayKey();
+    const results = [];
+
+    if (!state.lastOpenedDate) {
+        const result = applyStrongDay({ logDate: today, suppressUI: false });
+        state.lastOpenedDate = today;
+        state.lastCheckedDate = today;
+        results.push({ result, suppressUI: false });
+        return { results, journeyEnded: false };
+    }
+
+    if (state.lastCheckedDate === today) {
+        return { results, journeyEnded: false };
+    }
+
+    if (state.lastOpenedDate === today) {
+        state.lastCheckedDate = today;
+        return { results, journeyEnded: false };
+    }
+
+    // Close the last-opened day as implicit strong if user never slipped that day
+    if (state.todayStatus === 'none') {
+        const result = applyStrongDay({ logDate: state.lastOpenedDate, suppressUI: true });
+        results.push({ result, suppressUI: true });
+        if (journeyIsOver(state)) {
+            state.lastOpenedDate = today;
+            state.lastCheckedDate = today;
+            return { results, journeyEnded: true };
+        }
+    }
+
+    const queue = buildGapDayQueue(state.lastOpenedDate, today);
+    for (let i = 0; i < queue.length; i++) {
+        const dateKey = queue[i];
+        const isLast = i === queue.length - 1;
+
+        if (dateKey === today && state.todayStatus === 'failed') continue;
+
+        advanceCalendarDay();
+        const result = applyStrongDay({ logDate: dateKey, suppressUI: !isLast });
+        results.push({ result, suppressUI: !isLast });
+        if (journeyIsOver(state)) {
+            state.lastOpenedDate = today;
+            state.lastCheckedDate = today;
+            return { results, journeyEnded: true };
+        }
+    }
+
+    state.lastOpenedDate = today;
+    state.lastCheckedDate = today;
+    return { results, journeyEnded: false };
 }
 
 /**

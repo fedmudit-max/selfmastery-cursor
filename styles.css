@@ -233,9 +233,28 @@
 
         /* ── ACTION BUTTONS ─────────────────────────────── */
         .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 12px;
+        }
+
+        .day-status {
+            text-align: center;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .day-status.strong {
+            background: rgba(52, 199, 89, 0.12);
+            color: var(--green);
+        }
+
+        .day-status.slipped {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
         }
 
         button {

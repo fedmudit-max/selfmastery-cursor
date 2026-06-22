@@ -63,10 +63,10 @@
             <div class="chances-label" id="chancesLabel">💪 10 chances remaining</div>
         </div>
 
-        <!-- Action buttons -->
+        <!-- Action buttons — log slips only; clean days count automatically -->
         <div class="action-buttons">
-            <button class="btn-success" id="successBtn" data-action="success">✓ I STAYED STRONG</button>
-            <button class="btn-danger"  id="failBtn"    data-action="modal-fail">✕ I Slipped</button>
+            <div class="day-status strong" id="dayStatus">Day 1 — going strong 💪</div>
+            <button class="btn-danger" id="failBtn" data-action="modal-fail">✕ I Slipped</button>
             <button class="btn-urge" data-action="urge">🌊 I Feel the Urge</button>
         </div>
     </div>
@@ -284,8 +284,8 @@
         <!-- Slide 5 — The destination -->
         <div class="onboarding-slide" id="slide-4">
             <div class="onboarding-emoji">🦁</div>
-            <div class="onboarding-title">Become the King</div>
-            <div class="onboarding-body">Strong → Warrior → King. Every day you log is a step. Every urge you resist is proof. The crown isn't given — it's earned. Your journey starts now.</div>
+            <div class="onboarding-title">Log Only When You Slip</div>
+            <div class="onboarding-body">Clean days count automatically — no daily check-in needed. Just tap when you slip. Your streak grows every day you stay clean. The crown isn't given — it's earned.</div>
         </div>
 
         <!-- Dots -->
@@ -300,38 +300,6 @@
         <!-- Buttons -->
         <button class="onboarding-next" id="onboardingBtn" data-action="onboardingNext">Next →</button>
         <button class="onboarding-skip" data-action="onboardingSkip">Skip</button>
-    </div>
-</div>
-
-<!-- ── Yesterday reminder overlay ── -->
-<div class="overlay" id="reminderOverlay">
-    <div class="overlay-card" style="text-align:center;">
-        <div style="font-size:48px;margin-bottom:12px;">📅</div>
-        <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.3px;">Did you stay strong yesterday?</div>
-        <div style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:24px;">You forgot to log. How was yesterday?</div>
-        <div style="display:flex;gap:12px;">
-            <button data-action="yesterday-strong" style="flex:1;padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ I Stayed Strong</button>
-            <button data-action="yesterday-slip" style="flex:1;padding:13px;background:linear-gradient(180deg,#ff453a,#ff3b30);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✕ I Slipped</button>
-        </div>
-    </div>
-</div>
-
-<!-- ── Multi-day gap review overlay ── -->
-<div class="overlay" id="gapReviewOverlay">
-    <div class="overlay-card" style="text-align:center;">
-        <div style="font-size:48px;margin-bottom:12px;">📅</div>
-        <div id="gapReviewTitle" style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.3px;">You've been away</div>
-        <div id="gapReviewMessage" style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:24px;"></div>
-        <div id="gapReviewChoices" style="display:flex;flex-direction:column;gap:12px;">
-            <button data-action="gapAllStrong" style="padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ All days were strong</button>
-            <button data-action="gapDayByDay" style="padding:13px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Log day by day</button>
-        </div>
-        <div id="gapReviewDayLog" style="display:none;">
-            <div style="display:flex;gap:12px;">
-                <button data-action="gap-strong" style="flex:1;padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ Strong</button>
-                <button data-action="gap-slip" style="flex:1;padding:13px;background:linear-gradient(180deg,#ff453a,#ff3b30);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✕ Slip</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -411,8 +379,8 @@
     </div>
 </div>
 
-    <script src="./data.js?v=5"></script>
-    <script src="./logic.js?v=5"></script>
-    <script src="./app.js?v=5"></script>
+    <script src="./data.js?v=6"></script>
+    <script src="./logic.js?v=6"></script>
+    <script src="./app.js?v=6"></script>
 </body>
 </html>

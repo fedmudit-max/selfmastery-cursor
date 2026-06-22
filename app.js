@@ -17,8 +17,6 @@ let currentTab = 0;
 let chartPage = -1;
 let chartMode = 'streaks';
 let monthOffset = 0;
-let gapDayQueue = [];
-let gapDayIndex = 0;
 
 function switchChartMode(mode) {
     chartMode = mode;
@@ -40,28 +38,16 @@ function init() {
 }
 
 // ════════════════════════════════════════════════════════
-//  USER ACTIONS
+//  USER ACTIONS — slip-only logging; clean days are automatic
 // ════════════════════════════════════════════════════════
-
-function handleSuccess() {
-    if (state.todayStatus === 'failed') {
-        showToast(0, 'You already slipped today. Stay strong tomorrow!');
-        return;
-    }
-    if (state.todayStatus === 'success') return; // already logged
-    showModal('success');
-}
 
 function showModal(action) {
     pendingAction = action;
     document.getElementById('modalMessage').textContent =
-        action === 'success' ? 'Mark today as successful?' :
-        action === 'reset'   ? 'Reset all data?' :
-        'Today was hard. Log it and keep going?';
+        action === 'reset' ? 'Reset all data?' :
+        'Log today as a slip? Your streak will reset but your journey continues.';
     document.getElementById('modalConfirmBtn').textContent =
-        action === 'success' ? 'Confirm' :
-        action === 'reset'   ? 'Yes, reset all' :
-        'Yes, log it';
+        action === 'reset' ? 'Yes, reset all' : 'Yes, log it';
 
     // Show RESET input only for reset action
     const resetWrap  = document.getElementById('resetConfirmWrap');
@@ -96,8 +82,7 @@ function closeModal() {
 }
 
 function confirmAction() {
-    if (pendingAction === 'success') recordSuccess();
-    else if (pendingAction === 'fail') recordFailure();
+    if (pendingAction === 'fail') recordFailure();
     else if (pendingAction === 'reset') resetAll();
     closeModal();
 }
@@ -113,15 +98,6 @@ function resetAll() {
     renderAll();
 }
 
-
-function recordSuccess() {
-    state.lastOpenedDate = todayKey();
-    const result = applyStrongDay({ logDate: todayKey(), suppressUI: false });
-    handleStrongDayUI(result, false);
-    chartPage = -1;
-    saveAndRender();
-    showToast(state.currentStreak);
-}
 
 function handleStrongDayUI(result, suppressUI) {
     if (suppressUI || !result) return;
@@ -185,7 +161,7 @@ function saveAndRender() {
 function renderAll() {
     renderTopStats();
     renderChances();
-    renderButtons();
+    renderDayStatus();
     renderStreakMilestones();
     renderJourneyMilestones();
     renderBrainCard();
@@ -217,34 +193,28 @@ function renderChances() {
         `💪 ${remaining} ${remaining === 1 ? 'chance' : 'chances'} remaining`;
 }
 
-function renderButtons() {
-    const successBtn = document.getElementById('successBtn');
-    const failBtn    = document.getElementById('failBtn');
+function renderDayStatus() {
+    const statusEl = document.getElementById('dayStatus');
+    const failBtn  = document.getElementById('failBtn');
 
-    if (state.todayStatus === 'success') {
-        successBtn.disabled = true;
-        successBtn.classList.add('logged');
-        successBtn.textContent = 'Strong 💪';
-        failBtn.disabled = true;
-        failBtn.textContent = '✕ Blocked';
-
-    } else if (state.todayStatus === 'failed') {
-        successBtn.disabled = true;
-        successBtn.classList.remove('logged');
-        successBtn.textContent = 'Plan to avoid it next time';
+    if (state.todayStatus === 'failed') {
+        statusEl.className = 'day-status slipped';
+        statusEl.textContent = state.currentStreak > 0
+            ? `Slipped today · ${state.currentStreak}-day streak before this`
+            : 'Slipped today — log honestly, keep going';
 
         const ORDINALS = ['', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
         const count    = state.todayFailCount;
-        failBtn.disabled   = false;
-        failBtn.textContent = count === 0
-            ? '✕ I Slipped'
+        failBtn.disabled    = false;
+        failBtn.textContent = count <= 1
+            ? '✕ I Slipped Again'
             : `✕ I Slipped ${ORDINALS[count] || `${count}th`} time`;
-
     } else {
-        successBtn.disabled = false;
-        successBtn.classList.remove('logged');
-        successBtn.textContent = '✓ I STAYED STRONG';
-        failBtn.disabled   = false;
+        statusEl.className = 'day-status strong';
+        statusEl.textContent = state.currentStreak > 0
+            ? `🔥 ${state.currentStreak}-day streak — going strong`
+            : `Day ${state.calendarDay} — going strong 💪`;
+        failBtn.disabled    = false;
         failBtn.textContent = '✕ I Slipped';
     }
 }
@@ -1001,18 +971,6 @@ function closeCompare() {
 //  MONTHLY GRID
 // ════════════════════════════════════════════════════════
 
-function todayKey() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-// Reads log entry status — handles both old string format and new object format
-function logStatus(entry) {
-    if (!entry) return null;
-    if (typeof entry === 'string') return entry;
-    return entry.status || null;
-}
-
 function monthNav(dir) {
     monthOffset += dir;
     if (monthOffset > 0) monthOffset = 0;
@@ -1085,16 +1043,18 @@ function renderMonthGrid() {
         if (dateKey && status) dateStatus[dateKey] = status;
     });
 
-    // Count for subtitle
+    // Count for subtitle — unlogged past days count as strong (default-success model)
     let strongCount = 0, slipCount = 0;
     for (let d = 1; d <= daysInMonth; d++) {
         const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        if (dateStatus[key] === 'strong') strongCount++;
-        if (dateStatus[key] === 'slip')   slipCount++;
+        const isFuture = isCurrentMonth && d > today.getDate();
+        if (isFuture) continue;
+        if (dateStatus[key] === 'slip') slipCount++;
+        else strongCount++;
     }
     subtitle.textContent = strongCount > 0 || slipCount > 0
         ? `${strongCount} strong · ${slipCount} slip${slipCount !== 1 ? 's' : ''}`
-        : 'Your history starts today';
+        : 'Clean days count automatically';
 
     // Day labels
     const DAY_LABELS = ['S','M','T','W','T','F','S'];
@@ -1113,9 +1073,9 @@ function renderMonthGrid() {
         const status   = dateStatus[key];
 
         let cls = 'month-cell';
-        if (status === 'strong') cls += ' strong';
-        else if (status === 'slip') cls += ' slip';
+        if (status === 'slip') cls += ' slip';
         else if (isFuture) cls += ' future';
+        else cls += ' strong'; // default-success: past & today without slip = strong
         if (isToday) cls += ' today';
 
         html += `<div class="${cls}">${d}</div>`;
@@ -1125,148 +1085,31 @@ function renderMonthGrid() {
 }
 
 // ════════════════════════════════════════════════════════
-//  DAY REFRESH
-//  On every app open, check if a new real-world day has
-//  passed and prompt for any missed logging.
+//  DAY REFRESH — auto-count elapsed days as strong
 // ════════════════════════════════════════════════════════
 
 function checkNewDay() {
-    const today = todayKey();
+    const outcome = catchUpElapsedDays(todayKey());
 
-    if (state.lastCheckedDate === today) return;
-
-    if (!state.lastOpenedDate) {
-        state.lastOpenedDate = today;
-        state.lastCheckedDate = today;
-        saveToStorage(state);
-        return;
-    }
-
-    if (state.lastOpenedDate === today) {
-        state.lastCheckedDate = today;
-        saveToStorage(state);
-        return;
-    }
-
-    const diffDays = daysBetweenKeys(state.lastOpenedDate, today);
-
-    // One day missed — ask about yesterday only
-    if (diffDays === 1 && state.todayStatus === 'none') {
-        const reminder = document.getElementById('reminderOverlay');
-        if (!reminder.classList.contains('active')) {
-            reminder.classList.add('active');
-        }
-        return;
-    }
-
-    // Multiple days missed — prompt instead of silent auto-fill
-    if (diffDays > 1 && state.todayStatus === 'none') {
-        const gap = document.getElementById('gapReviewOverlay');
-        if (!gap.classList.contains('active')) {
-            showGapReviewPrompt(diffDays);
-        }
-        return;
-    }
-
-    // Already logged today/yesterday status — just advance calendar for elapsed days
-    for (let i = 0; i < diffDays; i++) {
-        advanceCalendarDay();
-    }
-    state.lastOpenedDate = today;
-    state.lastCheckedDate = today;
-    chartPage = -1;
-    saveToStorage(state);
-    renderAll();
-}
-function showGapReviewPrompt(diffDays) {
-    document.getElementById('gapReviewTitle').textContent = "You've been away";
-    document.getElementById('gapReviewMessage').textContent =
-        `You haven't logged for ${diffDays} day${diffDays !== 1 ? 's' : ''}. How did those days go?`;
-    document.getElementById('gapReviewChoices').style.display = 'flex';
-    document.getElementById('gapReviewDayLog').style.display = 'none';
-    document.getElementById('gapReviewOverlay').classList.add('active');
-}
-
-function confirmGapAllStrong() {
-    document.getElementById('gapReviewOverlay').classList.remove('active');
-    const queue = buildGapDayQueue(state.lastOpenedDate, todayKey());
-    for (let idx = 0; idx < queue.length; idx++) {
-        const suppress = idx < queue.length - 1;
-        handleStrongDayUI(applyStrongDay({ logDate: queue[idx], suppressUI: suppress }), suppress);
-        if (journeyIsOver(state)) { completeEndJourney(); return; }
-        advanceCalendarDay();
-    }
-    finishGapCatchUp();
-}
-
-function startGapDayByDay() {
-    document.getElementById('gapReviewChoices').style.display = 'none';
-    document.getElementById('gapReviewDayLog').style.display = 'block';
-    gapDayQueue.length = 0;
-    gapDayQueue.push(...buildGapDayQueue(state.lastOpenedDate, todayKey()));
-    gapDayIndex = 0;
-    showNextGapDayPrompt();
-}
-
-function showNextGapDayPrompt() {
-    if (gapDayIndex >= gapDayQueue.length) {
-        document.getElementById('gapReviewOverlay').classList.remove('active');
-        finishGapCatchUp();
-        return;
-    }
-    const dateKey = gapDayQueue[gapDayIndex];
-    const label   = parseDateKey(dateKey).toLocaleDateString(undefined, {
-        weekday: 'short', month: 'short', day: 'numeric',
-    });
-    document.getElementById('gapReviewTitle').textContent = 'Did you stay strong?';
-    document.getElementById('gapReviewMessage').textContent =
-        `Day ${gapDayIndex + 1} of ${gapDayQueue.length} (${label})`;
-}
-
-function logGapDay(result) {
-    const dateKey = gapDayQueue[gapDayIndex];
-    if (result === 'strong') {
-        const suppress = gapDayIndex < gapDayQueue.length - 1;
-        handleStrongDayUI(applyStrongDay({ logDate: dateKey, suppressUI: suppress }), suppress);
-    } else {
-        applySlipDay({ logDate: dateKey, calDay: state.calendarDay });
-    }
-    if (journeyIsOver(state)) {
-        document.getElementById('gapReviewOverlay').classList.remove('active');
+    if (outcome.journeyEnded) {
+        chartPage = -1;
+        saveAndRender();
         completeEndJourney();
         return;
     }
-    advanceCalendarDay();
-    gapDayIndex++;
-    showNextGapDayPrompt();
-}
 
-function finishGapCatchUp() {
-    state.lastOpenedDate = todayKey();
-    state.lastCheckedDate = todayKey();
-    chartPage = -1;
-    saveToStorage(state);
-    renderAll();
-    showToast(state.currentStreak, 'Catch-up complete. Keep going!');
-}
+    if (outcome.results.length === 0) return;
 
-function logYesterday(result) {
-    document.getElementById('reminderOverlay').classList.remove('active');
-    const yKey = addDaysToKey(todayKey(), -1);
-
-    if (result === 'strong') {
-        handleStrongDayUI(applyStrongDay({ logDate: yKey, suppressUI: false }), false);
-    } else {
-        applySlipDay({ logDate: yKey, calDay: state.calendarDay });
+    for (const { result, suppressUI } of outcome.results) {
+        handleStrongDayUI(result, suppressUI);
     }
 
-    if (journeyIsOver(state)) { completeEndJourney(); return; }
-    advanceCalendarDay();
-    state.lastOpenedDate = todayKey();
-    state.lastCheckedDate = todayKey();
     chartPage = -1;
-    saveToStorage(state);
-    renderAll();
+    saveAndRender();
+    const last = outcome.results[outcome.results.length - 1];
+    if (last && !last.suppressUI && last.result) {
+        showToast(last.result.streak);
+    }
 }
 // ════════════════════════════════════════════════════════
 //  BRAIN RECOVERY CARD
@@ -1450,7 +1293,6 @@ function handleDataAction(e) {
 
     const arg = btn.dataset.arg;
     const actions = {
-        success: handleSuccess,
         'modal-fail': () => showModal('fail'),
         'modal-reset': () => showModal('reset'),
         urge: startUrgeSurf,
@@ -1463,12 +1305,6 @@ function handleDataAction(e) {
         'chart-journeys': () => switchChartMode('journeys'),
         onboardingNext: onboardingNext,
         onboardingSkip: completeOnboarding,
-        'yesterday-strong': () => logYesterday('strong'),
-        'yesterday-slip': () => logYesterday('slip'),
-        gapAllStrong: confirmGapAllStrong,
-        gapDayByDay: startGapDayByDay,
-        'gap-strong': () => logGapDay('strong'),
-        'gap-slip': () => logGapDay('slip'),
         closeCelebration: closeCelebration,
         modalCancel: closeModal,
         modalConfirm: confirmAction,
