@@ -8,8 +8,6 @@ let currentTab = 0;
 let chartPage = -1;
 let chartMode = 'streaks';
 let monthOffset = 0;
-let gapDayQueue = [];
-let gapDayIndex = 0;
 let toastTimer = null;
 let confettiParticles = [];
 let confettiAnimId    = null;
@@ -41,7 +39,7 @@ function saveAndRender() {
     const result = saveToStorage(state);
     if (!result.ok) {
         showToast(0, result.error === 'quota'
-            ? 'Storage full — export or reset data to keep logging.'
+            ? 'Storage full — reset data in Settings to keep logging.'
             : 'Could not save your progress. Try again.');
     }
     renderAll();
