@@ -163,7 +163,7 @@ function saveAndRender() {
 function renderAll() {
     renderTopStats();
     renderChances();
-    renderDayStatus();
+    renderButtons();
     renderStreakMilestones();
     renderJourneyMilestones();
     renderBrainCard();
@@ -195,27 +195,26 @@ function renderChances() {
         `💪 ${remaining} ${remaining === 1 ? 'chance' : 'chances'} remaining`;
 }
 
-function renderDayStatus() {
-    const statusEl = document.getElementById('dayStatus');
-    const failBtn  = document.getElementById('failBtn');
+function renderButtons() {
+    const successBtn = document.getElementById('successBtn');
+    const failBtn    = document.getElementById('failBtn');
 
     if (state.todayStatus === 'failed') {
-        statusEl.className = 'day-status slipped';
-        statusEl.textContent = state.currentStreak > 0
-            ? `Slipped today · ${state.currentStreak}-day streak before this`
-            : 'Slipped today — log honestly, keep going';
+        successBtn.disabled = true;
+        successBtn.classList.remove('logged');
+        successBtn.textContent = 'Plan to avoid it next time';
 
         const ORDINALS = ['', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
         const count    = state.todayFailCount;
         failBtn.disabled    = false;
         failBtn.textContent = count <= 1
-            ? '✕ I Slipped Again'
+            ? '✕ I Slipped'
             : `✕ I Slipped ${ORDINALS[count] || `${count}th`} time`;
+
     } else {
-        statusEl.className = 'day-status strong';
-        statusEl.textContent = state.currentStreak > 0
-            ? `🔥 ${state.currentStreak}-day streak — going strong`
-            : `Day ${state.calendarDay} — going strong 💪`;
+        successBtn.disabled = true;
+        successBtn.classList.add('logged');
+        successBtn.textContent = 'Strong 💪';
         failBtn.disabled    = false;
         failBtn.textContent = '✕ I Slipped';
     }
