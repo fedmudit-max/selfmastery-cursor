@@ -57,25 +57,18 @@ function checkNewDay() {
 }
 
 function applyMultiDayCatchUp(today) {
-    const outcome = autoStrongAbsentDays(today);
+    const results = autoStrongAbsentDays(today);
     state.lastOpenedDate = today;
     state.lastCheckedDate = today;
 
-    if (outcome.journeyEnded) {
-        chartPage = -1;
-        saveAndRender();
-        completeEndJourney();
-        return;
-    }
-
-    for (const { result, suppressUI } of outcome.results) {
+    for (const { result, suppressUI } of results) {
         handleStrongDayUI(result, suppressUI);
     }
 
     chartPage = -1;
     saveAndRender();
 
-    const last = outcome.results[outcome.results.length - 1];
+    const last = results[results.length - 1];
     if (last && !last.suppressUI && last.result) {
         showToast(last.result.streak, 'Missed days counted as strong 💪');
     }

@@ -132,7 +132,7 @@ function mergeSavedState(saved) {
 
 let state = getDefaultState();
 
-/** Replace app state in place (ES modules cannot reassign the import binding). */
+/** Replace app state in place so every script keeps the same global state object. */
 function replaceState(next) {
     for (const key of Object.keys(state)) {
         delete state[key];
@@ -242,28 +242,25 @@ function buildGapDayQueue(lastOpenedDate, today) {
 /**
  * Multi-day absence: every missed wall-clock day counts as strong.
  * Used when the user returns after 2+ days away.
- * @returns {{ results: Array<{result: object, suppressUI: boolean}>, journeyEnded: boolean }}
+ * @returns {Array<{result: object, suppressUI: boolean}>}
  */
 function autoStrongAbsentDays(today) {
     today = today || todayKey();
     const results = [];
 
     if (!state.lastOpenedDate || state.lastOpenedDate === today) {
-        return { results, journeyEnded: false };
+        return results;
     }
 
     const diffDays = daysBetweenKeys(state.lastOpenedDate, today);
     if (diffDays <= 1) {
-        return { results, journeyEnded: false };
+        return results;
     }
 
     // Last-opened day is strong if the user never logged it
     if (state.todayStatus === 'none') {
         const result = applyStrongDay({ logDate: state.lastOpenedDate, suppressUI: true });
         results.push({ result, suppressUI: true });
-        if (journeyIsOver(state)) {
-            return { results, journeyEnded: true };
-        }
     }
 
     const queue = buildGapDayQueue(state.lastOpenedDate, today);
@@ -276,12 +273,9 @@ function autoStrongAbsentDays(today) {
         advanceCalendarDay();
         const result = applyStrongDay({ logDate: dateKey, suppressUI: !isLast });
         results.push({ result, suppressUI: !isLast });
-        if (journeyIsOver(state)) {
-            return { results, journeyEnded: true };
-        }
     }
 
-    return { results, journeyEnded: false };
+    return results;
 }
 
 /**
