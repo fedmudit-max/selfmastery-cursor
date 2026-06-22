@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>King — NoFap Journey Tracker</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#34c759">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="King">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loadScreen" style="
+    position:fixed;inset:0;
+    background:linear-gradient(180deg, #30d158, #34c759);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    z-index:9999;
+    transition:opacity 0.3s ease;
+    padding:40px;
+    text-align:center;
+">
+    <div style="font-size:32px;margin-bottom:12px;">💪</div>
+    <div style="font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px;margin-bottom:20px;">King</div>
+    <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.85);line-height:1.5;letter-spacing:-0.2px;">
+        "What gets measured,<br>gets managed."
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- ═══ PRIMARY CARD ═══════════════════════════════════ -->
+    <div class="card">
+
+        <!-- Day counter + Best Journey -->
+        <div class="top-row">
+            <div class="stat-box green">
+                <div class="stat-label green">Day</div>
+                <div class="stat-value green" id="calendarDay">1</div>
+            </div>
+            <div class="stat-box gold">
+                <div class="stat-label gold">🏆 Best Journey</div>
+                <div class="stat-value gold" id="bestJourney">0/0</div>
+            </div>
+        </div>
+
+        <!-- Current journey score -->
+        <div class="score-card">
+            <div class="score-label">Current Journey</div>
+            <div class="score-value" id="currentJourney">0/0</div>
+        </div>
+
+        <!-- 10 chances (💪 emojis) -->
+        <div class="chances-card">
+            <div class="chances-grid" id="chancesGrid"></div>
+            <div class="chances-label" id="chancesLabel">💪 10 chances remaining</div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-buttons">
+            <button class="btn-success" id="successBtn" data-action="success">✓ I STAYED STRONG</button>
+            <button class="btn-danger"  id="failBtn"    data-action="modal-fail">✕ I Slipped</button>
+            <button class="btn-urge" data-action="urge">🌊 I Feel the Urge</button>
+        </div>
+    </div>
+
+    <!-- ═══ MILESTONES CARD ════════════════════════════════ -->
+    <div class="card">
+        <div class="tabs">
+            <button class="tab active" data-action="tab-0">Streak</button>
+            <button class="tab"        data-action="tab-1">Journey</button>
+            <button class="tab"        data-action="tab-2">Progress</button>
+        </div>
+
+        <!-- Tab 0: Streak milestones within current streak -->
+        <div class="tab-content active" id="tab-streak">
+            <div class="milestone-list">
+                <div class="milestone-item" id="cs-day1">
+                    <div class="milestone-info"><div class="milestone-icon">⚡</div><div class="milestone-name">Day 1</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-day3">
+                    <div class="milestone-info"><div class="milestone-icon">🔥</div><div class="milestone-name">Day 3</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-week1">
+                    <div class="milestone-info"><div class="milestone-icon">📅</div><div class="milestone-name">Week 1</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-day10">
+                    <div class="milestone-info"><div class="milestone-icon">🌟</div><div class="milestone-name">Day 10</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-week2">
+                    <div class="milestone-info"><div class="milestone-icon">🌿</div><div class="milestone-name">Week 2</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-week3">
+                    <div class="milestone-info"><div class="milestone-icon">🌱</div><div class="milestone-name">Week 3</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+                <div class="milestone-item" id="cs-day30">
+                    <div class="milestone-info"><div class="milestone-icon">💪</div><div class="milestone-name">Day 30</div></div>
+                    <div class="milestone-status">—</div>
+                </div>
+            </div>
+            <div class="section-label">Records</div>
+            <div class="milestone-list">
+                <div class="milestone-item" id="cs-day50">
+                    <div class="milestone-info"><div class="milestone-icon">⭐</div><div class="milestone-name">50 Days Count</div></div>
+                    <div class="milestone-status">0</div>
+                </div>
+                <div class="milestone-item" id="cs-day100">
+                    <div class="milestone-info"><div class="milestone-icon">💯</div><div class="milestone-name">100 Days Count</div></div>
+                    <div class="milestone-status">0</div>
+                </div>
+                <div class="milestone-item" id="bestStreakItem">
+                    <div class="milestone-info"><div class="milestone-icon">🏆</div><div class="milestone-name">Best Streak</div></div>
+                    <div class="milestone-status" id="longestStreakDisplay">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1: Journey strong-day milestones -->
+        <div class="tab-content" id="tab-journey">
+            <div class="section-label">Strong</div>
+            <div class="milestone-list">
+                <div class="milestone-item" id="jm-75">
+                    <div class="milestone-info"><div class="milestone-icon">🌱</div><div class="milestone-name">75 Days</div></div>
+                    <div class="milestone-status">0</div>
+                </div>
+                <div class="milestone-item" id="jm-100">
+                    <div class="milestone-info"><div class="milestone-icon">🔥</div><div class="milestone-name">100 Days</div></div>
+                    <div class="milestone-status">0</div>
+                </div>
+                <div class="milestone-item" id="jm-150">
+                    <div class="milestone-info"><div class="milestone-icon">⚔️</div><div class="milestone-name">150 Days</div></div>
+                    <div class="milestone-status">0</div>
+                </div>
+            </div>
+            <div class="section-label">Warrior</div>
+            <div id="enduranceSection"></div>
+
+            <div class="section-label">King</div>
+            <div id="legendarySection"></div>
+
+            <!-- Hidden milestone items for renderJourneyMilestones DOM targeting -->
+            <div style="display:none">
+                <div class="milestone-item" id="jm-200"><div class="milestone-info"><div class="milestone-icon">⚡</div><div class="milestone-name">200 Days</div></div><div class="milestone-status">0</div></div>
+                <div class="milestone-item" id="jm-300"><div class="milestone-info"><div class="milestone-icon">⚡</div><div class="milestone-name">300 Days</div></div><div class="milestone-status">0</div></div>
+                <div class="milestone-item" id="jm-400"><div class="milestone-info"><div class="milestone-icon">💎</div><div class="milestone-name">400 Days</div></div><div class="milestone-status">0</div></div>
+                <div class="milestone-item" id="jm-500"><div class="milestone-info"><div class="milestone-icon">🦁</div><div class="milestone-name">500 Days</div></div><div class="milestone-status">0</div></div>
+                <div class="milestone-item" id="jm-750"><div class="milestone-info"><div class="milestone-icon">🦅</div><div class="milestone-name">750 Days</div></div><div class="milestone-status">0</div></div>
+                <div class="milestone-item" id="jm-1000"><div class="milestone-info"><div class="milestone-icon">👑</div><div class="milestone-name">1000 Days</div></div><div class="milestone-status">0</div></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Science — Brain recovery timeline -->
+        <div class="tab-content" id="tab-science">
+            <div class="science-list" id="scienceList"></div>
+            <div class="science-disclaimer">
+                ℹ️ Phases are based on your current streak. Timelines are drawn from neuroscience research on addiction recovery and community-reported experiences. Individual results vary.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MONTHLY GRID CARD ═════════════════════════════ -->
+    <div class="card">
+        <div class="chart-header">
+            <button class="month-nav-btn" data-action="month-prev">‹</button>
+            <div style="text-align:center;">
+                <span class="chart-title" id="monthGridTitle">This Month</span><br>
+                <span class="chart-subtitle" id="monthGridSubtitle"></span>
+            </div>
+            <button class="month-nav-btn" id="monthNavNext" data-action="month-next">›</button>
+        </div>
+        <div class="month-grid" id="monthGrid"></div>
+        <div class="month-legend">
+            <span class="legend-dot strong"></span><span>Strong</span>
+            <span class="legend-dot slip"></span><span>Slip</span>
+            <span class="legend-dot empty"></span><span>No log</span>
+        </div>
+    </div>
+
+    <!-- ═══ HISTORY CHART CARD ════════════════════════════ -->
+    <div class="card">
+        <div class="chart-header">
+            <span class="chart-title" id="chartTitle">Streak History</span>
+            <span class="chart-subtitle" id="chartSubtitle"></span>
+        </div>
+
+        <!-- Streaks | Journeys toggle -->
+        <div class="chart-toggle" id="chartToggle">
+            <button class="chart-toggle-btn active" id="toggleStreaks" data-action="chart-streaks">Streaks</button>
+            <button class="chart-toggle-btn"        id="toggleJourneys" data-action="chart-journeys">Journeys</button>
+        </div>
+
+        <div class="chart-outer" id="chartOuter">
+            <svg class="chart-yaxis" id="chartYAxis" height="180"></svg>
+            <div style="position:relative;flex:1;">
+                <svg class="chart-inner" id="chartInner" height="180" style="width:100%;display:block;"></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ DAILY KNOWLEDGE CARD ════════════════════════════ -->
+    <div class="card knowledge-card" id="knowledgeCard">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div class="knowledge-emoji" id="knowledgeEmoji">🧠</div>
+            <div class="knowledge-content">
+                <div class="knowledge-headline" id="knowledgeHeadline"></div>
+                <div class="knowledge-body" id="knowledgeBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ LIFETIME STATS CARD ══════════════════════════ -->
+    <div class="card">
+        <div class="card-section-title">Lifetime Stats</div>
+        <div class="lifetime-stats">
+            <div class="lifetime-stat">
+                <div class="lifetime-stat-value" id="lifetimeJourneys">1</div>
+                <div class="lifetime-stat-label">Journeys</div>
+            </div>
+            <div class="lifetime-stat-divider"></div>
+            <div class="lifetime-stat">
+                <div class="lifetime-stat-value green" id="lifetimeStrong">0</div>
+                <div class="lifetime-stat-label">Strong Days</div>
+            </div>
+            <div class="lifetime-stat-divider"></div>
+            <div class="lifetime-stat">
+                <div class="lifetime-stat-value red" id="lifetimeRelapses">0</div>
+                <div class="lifetime-stat-label">Relapses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ RESET CARD ════════════════════════════════════ -->
+    <div class="card" style="text-align:center;">
+        <button class="btn-reset" data-action="modal-reset" style="width:100%;">↺ Reset All Data</button>
+    </div>
+
+</div><!-- .container -->
+
+<!-- ── Onboarding ── -->
+<div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-card">
+
+        <!-- Slide 1 — Welcome -->
+        <div class="onboarding-slide active" id="slide-0">
+            <div class="onboarding-emoji">👑</div>
+            <div class="onboarding-title">Welcome to King</div>
+            <div class="onboarding-body">This is not another streak app that punishes you for slipping. King is built differently — for the long journey, not the perfect day.</div>
+        </div>
+
+        <!-- Slide 2 — The problem -->
+        <div class="onboarding-slide" id="slide-1">
+            <div class="onboarding-emoji">💔</div>
+            <div class="onboarding-title">Fail Forward, Not Backward</div>
+            <div class="onboarding-body">Most apps reset everything on one slip. King doesn't. A slip is not the end — it's data. You learn, you adjust, you keep moving forward.</div>
+        </div>
+
+        <!-- Slide 3 — The journey system -->
+        <div class="onboarding-slide" id="slide-2">
+            <div class="onboarding-emoji">⚡</div>
+            <div class="onboarding-title">10 Chances Per Journey</div>
+            <div class="onboarding-body">A slip costs a chance — not your journey. You have 10 chances. Use them. Your journey ends only when all 10 are gone. Then a new one begins.</div>
+        </div>
+
+        <!-- Slide 4 — Progress not perfection -->
+        <div class="onboarding-slide" id="slide-3">
+            <div class="onboarding-emoji">📈</div>
+            <div class="onboarding-title">Progress, Not Perfection</div>
+            <div class="onboarding-body">Each journey, aim for more strong days than the last. More wins. Fewer slips. Your success rate grows. That's what recovery actually looks like.</div>
+        </div>
+
+        <!-- Slide 5 — The destination -->
+        <div class="onboarding-slide" id="slide-4">
+            <div class="onboarding-emoji">🦁</div>
+            <div class="onboarding-title">Become the King</div>
+            <div class="onboarding-body">Strong → Warrior → King. Every day you log is a step. Every urge you resist is proof. The crown isn't given — it's earned. Your journey starts now.</div>
+        </div>
+
+        <!-- Dots -->
+        <div class="onboarding-dots">
+            <div class="onboarding-dot active" id="dot-0"></div>
+            <div class="onboarding-dot" id="dot-1"></div>
+            <div class="onboarding-dot" id="dot-2"></div>
+            <div class="onboarding-dot" id="dot-3"></div>
+            <div class="onboarding-dot" id="dot-4"></div>
+        </div>
+
+        <!-- Buttons -->
+        <button class="onboarding-next" id="onboardingBtn" data-action="onboardingNext">Next →</button>
+        <button class="onboarding-skip" data-action="onboardingSkip">Skip</button>
+    </div>
+</div>
+
+<!-- ── Yesterday reminder overlay ── -->
+<div class="overlay" id="reminderOverlay">
+    <div class="overlay-card" style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">📅</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.3px;">Did you stay strong yesterday?</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:24px;">You forgot to log. How was yesterday?</div>
+        <div style="display:flex;gap:12px;">
+            <button data-action="yesterday-strong" style="flex:1;padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ I Stayed Strong</button>
+            <button data-action="yesterday-slip" style="flex:1;padding:13px;background:linear-gradient(180deg,#ff453a,#ff3b30);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✕ I Slipped</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Multi-day gap review overlay ── -->
+<div class="overlay" id="gapReviewOverlay">
+    <div class="overlay-card" style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;">📅</div>
+        <div id="gapReviewTitle" style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.3px;">You've been away</div>
+        <div id="gapReviewMessage" style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:24px;"></div>
+        <div id="gapReviewChoices" style="display:flex;flex-direction:column;gap:12px;">
+            <button data-action="gapAllStrong" style="padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ All days were strong</button>
+            <button data-action="gapDayByDay" style="padding:13px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Log day by day</button>
+        </div>
+        <div id="gapReviewDayLog" style="display:none;">
+            <div style="display:flex;gap:12px;">
+                <button data-action="gap-strong" style="flex:1;padding:13px;background:linear-gradient(180deg,var(--green-light),var(--green));color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✓ Strong</button>
+                <button data-action="gap-slip" style="flex:1;padding:13px;background:linear-gradient(180deg,#ff453a,#ff3b30);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✕ Slip</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Toast notification ── -->
+<div id="toast"></div>
+
+<!-- ── Confetti canvas ── -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ── Celebration popup ── -->
+<div class="celebration-overlay" id="celebrationOverlay">
+    <div class="celebration-card">
+        <span class="celebration-emoji" id="celebEmoji">🎉</span>
+        <div class="celebration-stage"   id="celebStage">MILESTONE</div>
+        <div class="celebration-title"   id="celebTitle">Achievement Unlocked!</div>
+        <div class="celebration-message" id="celebMessage">Keep going.</div>
+        <button class="celebration-close" data-action="closeCelebration">Keep Going 💪</button>
+    </div>
+</div>
+
+<!-- ── Confirmation modal ── -->
+<div class="modal" id="confirmModal">
+    <div class="modal-card">
+        <h3 id="modalMessage">Are you sure?</h3>
+        <!-- Reset confirmation input — only shown for reset action -->
+        <div id="resetConfirmWrap" style="display:none;margin-bottom:16px;">
+            <p style="font-size:13px;color:#86868b;margin-bottom:10px;line-height:1.5;">This will erase all your streaks, journeys and history forever. Type <strong>RESET</strong> to confirm.</p>
+            <input id="resetConfirmInput" type="text" placeholder="Type RESET"
+               
+                style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;outline:none;letter-spacing:1px;text-transform:uppercase;"/>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel"  data-action="modalCancel">Cancel</button>
+            <button class="modal-btn confirm" id="modalConfirmBtn" data-action="modalConfirm">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Urge surfing timer overlay ── -->
+<div class="overlay" id="urgeOverlay">
+    <div class="overlay-card">
+        <div class="urge-title">🌊 Surf the Urge</div>
+        <div class="urge-subtitle">Urges peak and fade in 15 minutes.<br>Just breathe. You can do this.</div>
+
+        <!-- Breathing ring -->
+        <div class="breathing-ring-wrap">
+            <svg class="breathing-ring" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(52,199,89,0.15)" stroke-width="6"/>
+                <circle cx="60" cy="60" r="54" fill="none" stroke="#34c759" stroke-width="6"
+                    stroke-dasharray="339" stroke-dashoffset="339"
+                    stroke-linecap="round" id="breathRing"
+                    style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 4s ease-in-out"/>
+                <text x="60" y="56" text-anchor="middle" font-size="13" font-weight="600"
+                    fill="#34c759" font-family="-apple-system,sans-serif" id="breathLabel">Breathe in</text>
+                <text x="60" y="73" text-anchor="middle" font-size="22" font-weight="700"
+                    fill="#1d1d1f" font-family="-apple-system,sans-serif" id="urgeCountdown">15:00</text>
+            </svg>
+        </div>
+
+        <div class="urge-phase" id="urgePhase">Inhale slowly for 4 seconds…</div>
+
+        <button class="btn-urge-survived" data-action="urgeSurvived">✓ I Survived It</button>
+        <button class="btn-urge-cancel"   data-action="closeUrge">I couldn't hold it</button>
+    </div>
+</div>
+
+<!-- ── Journey comparison card ── -->
+<div class="overlay" id="journeyCompareOverlay">
+    <div class="overlay-card compare-card">
+        <div class="compare-header">
+            <div class="compare-badge">JOURNEY COMPLETE</div>
+            <div class="compare-title" id="compareTitleText">Journey 2 vs Journey 1</div>
+        </div>
+        <div class="compare-grid" id="compareGrid"></div>
+        <div class="compare-message" id="compareMessage"></div>
+        <button class="btn-compare-close" data-action="closeCompare">Start Journey <span id="compareNextNum">3</span> 💪</button>
+    </div>
+</div>
+
+    <script src="./data.js?v=5"></script>
+    <script src="./logic.js?v=5"></script>
+    <script src="./app.js?v=5"></script>
+</body>
+</html>
