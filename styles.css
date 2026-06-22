@@ -327,6 +327,24 @@
             color: #ff3b30;
         }
 
+        .btn-dev {
+            background: rgba(0, 122, 255, 0.08);
+            color: #007aff;
+            border: 1px dashed rgba(0, 122, 255, 0.35);
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: none;
+            transition: all 0.2s;
+        }
+
+        .btn-dev:hover {
+            background: rgba(0, 122, 255, 0.14);
+        }
+
         /* ── TABS (iOS segmented control) ───────────────── */
         .tabs {
             display: flex;
@@ -1192,7 +1210,7 @@
             position: fixed;
             inset: 0;
             background: var(--bg);
-            z-index: 3000;
+            z-index: 4000;
             display: flex;
             align-items: center;
             justify-content: center;

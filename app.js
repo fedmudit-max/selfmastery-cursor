@@ -89,6 +89,7 @@ function confirmAction() {
 
 function resetAll() {
     safeRemove(STORAGE_KEY);
+    safeRemove('onboardingComplete');
     replaceState(getDefaultState());
     chartPage = -1;
     chartMode = 'streaks';
@@ -96,6 +97,7 @@ function resetAll() {
     switchTab(0);
     saveToStorage(state);
     renderAll();
+    checkOnboarding();
 }
 
 
@@ -1089,6 +1091,8 @@ function renderMonthGrid() {
 // ════════════════════════════════════════════════════════
 
 function checkNewDay() {
+    if (!safeGet('onboardingComplete')) return;
+
     const outcome = catchUpElapsedDays(todayKey());
 
     if (outcome.journeyEnded) {
@@ -1272,6 +1276,44 @@ function completeOnboarding() {
     const overlay = document.getElementById('onboardingOverlay');
     overlay.classList.add('hidden');
     setTimeout(() => overlay.style.display = 'none', 400);
+    checkNewDay();
+}
+
+// ════════════════════════════════════════════════════════
+//  DEV — simulate next calendar day (testing only)
+// ════════════════════════════════════════════════════════
+
+function devAdvanceOneDay() {
+    if (!safeGet('onboardingComplete')) {
+        showToast(0, 'Finish onboarding first.');
+        return;
+    }
+
+    const today = todayKey();
+
+    // Not yet caught up to today — run normal catch-up first
+    if (state.lastCheckedDate !== today) {
+        checkNewDay();
+        return;
+    }
+
+    // Already on today — simulate tomorrow: new journey day, auto-strong
+    advanceCalendarDay();
+    const result = applyStrongDay({ logDate: today, suppressUI: false });
+    handleStrongDayUI(result, false);
+
+    if (journeyIsOver(state)) {
+        chartPage = -1;
+        saveAndRender();
+        completeEndJourney();
+        return;
+    }
+
+    state.lastOpenedDate  = today;
+    state.lastCheckedDate = today;
+    chartPage = -1;
+    saveAndRender();
+    showToast(state.currentStreak, 'Test: +1 day ⏭');
 }
 
 // ════════════════════════════════════════════════════════
@@ -1311,6 +1353,7 @@ function handleDataAction(e) {
         urgeSurvived: urgeSurvived,
         closeUrge: closeUrge,
         closeCompare: closeCompare,
+        devNextDay: devAdvanceOneDay,
     };
     if (action === 'science-toggle' && arg !== undefined) toggleSciencePhase(Number(arg));
     else if (actions[action]) actions[action]();
@@ -1339,9 +1382,9 @@ setTimeout(() => {
     }
 }, 400);
 
-checkOnboarding();
 init();
-checkNewDay();
+checkOnboarding();
+if (safeGet('onboardingComplete')) checkNewDay();
 
 // Re-check day when user returns to app from background
 document.addEventListener('visibilitychange', () => {
