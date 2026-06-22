@@ -1,0 +1,136 @@
+/**
+ * ui-actions.js — User taps: strong, slip, reset, modals, journey end.
+ * Edit here: what happens when the user logs or confirms an action.
+ */
+
+// ════════════════════════════════════════════════════════
+//  USER ACTIONS
+// ════════════════════════════════════════════════════════
+
+function handleSuccess() {
+    if (state.todayStatus === 'failed') {
+        showToast(0, 'You already slipped today. Stay strong tomorrow!');
+        return;
+    }
+    if (state.todayStatus === 'success') return;
+    showModal('success');
+}
+
+function showModal(action) {
+    pendingAction = action;
+    document.getElementById('modalMessage').textContent =
+        action === 'success' ? 'Mark today as successful?' :
+        action === 'reset'   ? 'Reset all data?' :
+        'Today was hard. Log it and keep going?';
+    document.getElementById('modalConfirmBtn').textContent =
+        action === 'success' ? 'Confirm' :
+        action === 'reset'   ? 'Yes, reset all' :
+        'Yes, log it';
+
+    // Show RESET input only for reset action
+    const resetWrap  = document.getElementById('resetConfirmWrap');
+    const resetInput = document.getElementById('resetConfirmInput');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    if (action === 'reset') {
+        resetWrap.style.display = 'block';
+        resetInput.value = '';
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.4';
+    } else {
+        resetWrap.style.display = 'none';
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+    }
+
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function checkResetInput() {
+    const val = document.getElementById('resetConfirmInput').value.trim().toUpperCase();
+    const btn = document.getElementById('modalConfirmBtn');
+    btn.disabled    = val !== 'RESET';
+    btn.style.opacity = val !== 'RESET' ? '0.4' : '1';
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+    document.getElementById('resetConfirmInput').value = '';
+    document.getElementById('resetConfirmWrap').style.display = 'none';
+    pendingAction = null;
+}
+
+function confirmAction() {
+    if (pendingAction === 'success') recordSuccess();
+    else if (pendingAction === 'fail') recordFailure();
+    else if (pendingAction === 'reset') resetAll();
+    closeModal();
+}
+
+function resetAll() {
+    safeRemove(STORAGE_KEY);
+    safeRemove('onboardingComplete');
+    replaceState(getDefaultState());
+    chartPage = -1;
+    chartMode = 'streaks';
+    currentTab = 0;
+    switchTab(0);
+    saveToStorage(state);
+    renderAll();
+    checkOnboarding();
+}
+
+
+function recordSuccess() {
+    state.lastOpenedDate = todayKey();
+    const result = applyStrongDay({ logDate: todayKey(), suppressUI: false });
+    handleStrongDayUI(result, false);
+    chartPage = -1;
+    saveAndRender();
+    showToast(state.currentStreak);
+}
+
+function handleStrongDayUI(result, suppressUI) {
+    if (suppressUI || !result) return;
+    if (result.isNewRecord) {
+        setTimeout(() => showCelebration({
+            emoji: '🏆',
+            stage: 'NEW PERSONAL BEST',
+            title: `${result.streak} Days — New Record!`,
+            message: `You just beat your personal best! Old record: ${result.prevLongest} days. You are rewriting your own limits.`,
+        }), 400);
+    }
+    triggerStreakMilestone(result.streak);
+    checkJourneyMilestone(result.successCount, false);
+}
+
+function recordFailure() {
+    state.lastOpenedDate = todayKey();
+    const failures = recordSlipToday();
+    if (journeyIsOver(state)) {
+        completeEndJourney();
+    } else {
+        chartPage = -1;
+        saveAndRender();
+        showToast(0, `${failures} chance${failures > 1 ? 's' : ''} used. Keep moving forward. Journey Continues.`);
+    }
+}
+
+function completeEndJourney() {
+    const comparison = endJourney();
+    chartPage = -1;
+    saveAndRender();
+    setTimeout(() => showJourneyComparison(
+        { attempt: comparison.attempt, score: comparison.score, bestStreak: comparison.bestStreak },
+        comparison.prevJourney
+    ), 600);
+}
+
+function checkJourneyMilestone(successCount, suppressUI = false) {
+    const milestones = [30, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000];
+    if (milestones.includes(successCount)) {
+        if (successCount >= 75) {
+            state.journeyMilestones[successCount] = (state.journeyMilestones[successCount] || 0) + 1;
+        }
+        if (!suppressUI) triggerJourneyMilestone(successCount);
+    }
+}

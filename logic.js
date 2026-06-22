@@ -1,6 +1,7 @@
 /**
  * logic.js — State, storage, dates, and business rules.
  * No DOM calls — safe to unit test in Node.
+ * UI lives in ui-main.js, ui-actions.js, ui-overlays.js, ui-history.js, ui-day.js, boot.js.
  */
 
 // ── Storage ─────────────────────────────────────────────
