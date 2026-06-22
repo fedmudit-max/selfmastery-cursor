@@ -140,6 +140,7 @@ function handleStrongDayUI(result, suppressUI) {
 }
 
 function recordFailure() {
+    state.lastOpenedDate = todayKey();
     const failures = recordSlipToday();
     if (journeyIsOver(state)) {
         completeEndJourney();
