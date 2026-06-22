@@ -300,11 +300,6 @@ function endJourney() {
         date:    new Date().toISOString(),
     });
 
-    if (state.completedJourneys.length > 7) {
-        state.completedJourneys  = state.completedJourneys.slice(-7);
-        state.pastJourneyStreaks = state.pastJourneyStreaks.slice(-7);
-    }
-
     const comparison = {
         attempt: state.attempt,
         score:   { ...state.score },
