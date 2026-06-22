@@ -96,7 +96,7 @@ function handleStrongDayUI(result, suppressUI) {
             emoji: '🏆',
             stage: 'NEW PERSONAL BEST',
             title: `${result.streak} Days — New Record!`,
-            message: `You just beat your personal best! Old record: ${result.prevLongest} days. You are rewriting your own limits.`,
+            message: `You just beat your personal best! Old record: ${result.recordToBeat} days. You are rewriting your own limits.`,
         }), 400);
     }
     triggerStreakMilestone(result.streak);

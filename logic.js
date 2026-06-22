@@ -92,6 +92,7 @@ function getDefaultState() {
         score:             { success: 0, failures: 0 },
         currentStreak:     0,
         longestStreak:     0,
+        longestStreakAtStreakStart: 0,
         day50Count:        0,
         day100Count:       0,
         journeyMilestones: {
@@ -126,6 +127,15 @@ function mergeSavedState(saved) {
     merged.dailyLog = saved.dailyLog || defaults.dailyLog;
     merged.urgeLog = saved.urgeLog || defaults.urgeLog;
 
+    if (saved.longestStreakAtStreakStart === undefined) {
+        const streak = merged.currentStreak || 0;
+        const longest = merged.longestStreak || 0;
+        merged.longestStreakAtStreakStart =
+            streak === 0 ? longest
+            : streak < longest ? longest
+            : 0;
+    }
+
     return merged;
 }
 
@@ -154,7 +164,7 @@ function updateBestJourney() {
 
 /**
  * Log a strong day. Updates state only — UI layer handles celebrations.
- * @returns {{ streak, successCount, isNewRecord, prevLongest }}
+ * @returns {{ streak, successCount, isNewRecord, prevLongest, recordToBeat }}
  */
 function applyStrongDay({ logDate, suppressUI = false } = {}) {
     const dateKey = logDate || todayKey();
@@ -166,8 +176,9 @@ function applyStrongDay({ logDate, suppressUI = false } = {}) {
     state.dailyLog[`day-${calDay}`] = { status: 'strong', day: calDay, date: dateKey };
 
     const prevLongest = state.longestStreak;
-    const isNewRecord = state.currentStreak > prevLongest
-        && prevLongest > 0
+    const recordToBeat = state.longestStreakAtStreakStart;
+    const isNewRecord = state.currentStreak > recordToBeat
+        && recordToBeat > 0
         && !state.recordCelebrated
         && !STREAK_MILESTONES[state.currentStreak];
 
@@ -193,6 +204,7 @@ function applyStrongDay({ logDate, suppressUI = false } = {}) {
         successCount: state.score.success,
         isNewRecord: !suppressUI && isNewRecord,
         prevLongest,
+        recordToBeat,
     };
 }
 
@@ -207,6 +219,7 @@ function applySlipDay({ logDate, calDay }) {
     const streakToRecord = state.todayStatus === 'none' ? state.currentStreak : 0;
     state.currentJourneyStreaks.push(streakToRecord);
     state.score.failures++;
+    state.longestStreakAtStreakStart = state.longestStreak;
     state.currentStreak    = 0;
     state.recordCelebrated = false;
     state.dailyLog = state.dailyLog || {};
@@ -308,6 +321,7 @@ function endJourney() {
 
     state.attempt++;
     state.score                 = { success: 0, failures: 0 };
+    state.longestStreakAtStreakStart = state.longestStreak;
     state.currentStreak         = 0;
     state.calendarDay           = 1;
     state.currentJourneyStreaks = [];
