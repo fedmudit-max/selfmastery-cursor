@@ -328,6 +328,8 @@ function endJourney() {
     state.todayFailCount        = 0;
     state.urgesSurfed           = survivingUrges;
     state.urgeLog               = survivingLog;
+    state.lastOpenedDate        = '';
+    state.lastCheckedDate       = '';
 
     return comparison;
 }
