@@ -1,6 +1,12 @@
 /* ── RESET & TOKENS ─────────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         :root {
             --green:       #34c759;
             --green-light: #30d158;
@@ -17,8 +23,11 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 20px;
             -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none;
+            touch-action: manipulation;
         }
 
         .container { max-width: 480px; margin: 0 auto; padding: 12px 14px 24px; }

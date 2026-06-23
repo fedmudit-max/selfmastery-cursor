@@ -283,7 +283,7 @@ function advanceCalendarDay() {
     state.todayFailCount = 0;
 }
 
-/** Log a slip for a given calendar day. Multiple slips same day share one journey chance. */
+/** Log a slip for a given calendar day. Each slip uses one journey chance; slipCount tracks multiples same day. */
 function applySlipDay({ logDate, calDay }) {
     state.currentJourneyStreaks.push(streakSegmentBeforeSlip());
     state.score.failures++;

@@ -41,7 +41,7 @@ function saveAndRender() {
     const result = saveToStorage(state);
     if (!result.ok) {
         showToast(0, result.error === 'quota'
-            ? 'Storage full — reset data in Settings to keep logging.'
+            ? 'Storage full — use Reset All Data to keep logging.'
             : 'Could not save your progress. Try again.');
     }
     renderAll();
