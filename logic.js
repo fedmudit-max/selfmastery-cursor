@@ -3,13 +3,19 @@
  * No DOM — UI lives in ui-main.js, ui-actions.js, ui-overlays.js, ui-history.js, ui-day.js, boot.js.
  */
 
-// ── Storage ─────────────────────────────────────────────
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// ════════════════════════════════════════════════════════
+//  STORAGE
+// ════════════════════════════════════════════════════════
+
+let _memStorage = {};
 
 function loadFromStorage() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -24,24 +30,24 @@ function saveToStorage(stateObj) {
     }
 }
 
-let _memStorage = {};
-
 function safeGet(key) {
     try { return localStorage.getItem(key); }
-    catch (e) { return _memStorage[key] || null; }
+    catch { return _memStorage[key] ?? null; }
 }
 
 function safeSet(key, val) {
     try { localStorage.setItem(key, val); }
-    catch (e) { _memStorage[key] = val; }
+    catch { _memStorage[key] = val; }
 }
 
 function safeRemove(key) {
     try { localStorage.removeItem(key); }
-    catch (e) { delete _memStorage[key]; }
+    catch { delete _memStorage[key]; }
 }
 
-// ── Dates (local timezone — never parse YYYY-MM-DD as UTC) ──
+// ════════════════════════════════════════════════════════
+//  DATES — local timezone; never parse YYYY-MM-DD as UTC
+// ════════════════════════════════════════════════════════
 
 function parseDateKey(key) {
     const [y, m, d] = key.split('-').map(Number);
@@ -49,12 +55,14 @@ function parseDateKey(key) {
 }
 
 function dateKeyFromDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 }
 
 function daysBetweenKeys(fromKey, toKey) {
-    const ms = parseDateKey(toKey) - parseDateKey(fromKey);
-    return Math.round(ms / (1000 * 60 * 60 * 24));
+    return Math.round((parseDateKey(toKey) - parseDateKey(fromKey)) / MS_PER_DAY);
 }
 
 function addDaysToKey(key, n) {
@@ -66,12 +74,16 @@ function addDaysToKey(key, n) {
 function dayOfYearFromKey(key) {
     const d = parseDateKey(key);
     const start = new Date(d.getFullYear(), 0, 0);
-    return Math.floor((d - start) / (1000 * 60 * 60 * 24));
+    return Math.floor((d - start) / MS_PER_DAY);
 }
 
 function todayKey() {
     return dateKeyFromDate(new Date());
 }
+
+// ════════════════════════════════════════════════════════
+//  DAILY LOG HELPERS
+// ════════════════════════════════════════════════════════
 
 function logStatus(entry) {
     if (!entry) return null;
@@ -79,35 +91,76 @@ function logStatus(entry) {
     return entry.status || null;
 }
 
-// ── State ───────────────────────────────────────────────
+function dailyLogKey(calDay) {
+    return `day-${calDay}`;
+}
+
+function writeDailyLog(calDay, patch) {
+    state.dailyLog = state.dailyLog || {};
+    state.dailyLog[dailyLogKey(calDay)] = patch;
+}
+
+function nextSlipCount(calDay) {
+    const prev = state.dailyLog?.[dailyLogKey(calDay)];
+    if (prev && logStatus(prev) === 'slip') {
+        return (prev.slipCount || 1) + 1;
+    }
+    return 1;
+}
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
 
 function getDefaultState() {
     return {
-        calendarDay:       1,
-        todayStatus:       'none',
-        todayFailCount:    0,
-        lastOpenedDate:    '',
-        lastCheckedDate:   '',
-        attempt:           1,
-        score:             { success: 0, failures: 0 },
-        currentStreak:     0,
-        longestStreak:     0,
+        calendarDay: 1,
+        todayStatus: 'none',
+        todayFailCount: 0,
+        lastOpenedDate: '',
+        lastCheckedDate: '',
+        attempt: 1,
+        score: { success: 0, failures: 0 },
+        currentStreak: 0,
+        longestStreak: 0,
         longestStreakAtStreakStart: 0,
-        day50Count:        0,
-        day100Count:       0,
+        day50Count: 0,
+        day100Count: 0,
         journeyMilestones: {
             75: 0, 100: 0, 150: 0, 200: 0,
             300: 0, 400: 0, 500: 0, 750: 0, 1000: 0,
         },
-        bestJourney:           { success: 0, failures: 0 },
-        completedJourneys:     [],
+        bestJourney: { success: 0, failures: 0 },
+        completedJourneys: [],
         currentJourneyStreaks: [],
-        pastJourneyStreaks:    [],
-        urgesSurfed:           0,
-        urgeLog:               [],
-        dailyLog:              {},
-        recordCelebrated:      false,
+        pastJourneyStreaks: [],
+        urgesSurfed: 0,
+        urgeLog: [],
+        dailyLog: {},
+        recordCelebrated: false,
     };
+}
+
+/** Infer personal-best baseline for saves that predate longestStreakAtStreakStart. */
+function migrateLongestStreakAtStart(merged, saved) {
+    if (saved.longestStreakAtStreakStart !== undefined) {
+        return merged.longestStreakAtStreakStart;
+    }
+    const streak = merged.currentStreak || 0;
+    const longest = merged.longestStreak || 0;
+    if (streak === 0) return longest;
+    if (streak < longest) return longest;
+    return 0;
+}
+
+/** Backfill slipCount on today's log entry from todayFailCount (legacy saves). */
+function syncTodaySlipCountInLog(s) {
+    if (s.todayStatus !== 'failed' || s.todayFailCount < 2) return;
+    const key = dailyLogKey(s.calendarDay);
+    const entry = s.dailyLog?.[key];
+    if (entry && logStatus(entry) === 'slip') {
+        entry.slipCount = Math.max(entry.slipCount || 1, s.todayFailCount);
+    }
 }
 
 function mergeSavedState(saved) {
@@ -126,29 +179,10 @@ function mergeSavedState(saved) {
     merged.currentJourneyStreaks = saved.currentJourneyStreaks || saved.currentAttemptStreaks || defaults.currentJourneyStreaks;
     merged.dailyLog = saved.dailyLog || defaults.dailyLog;
     merged.urgeLog = saved.urgeLog || defaults.urgeLog;
-
-    if (saved.longestStreakAtStreakStart === undefined) {
-        const streak = merged.currentStreak || 0;
-        const longest = merged.longestStreak || 0;
-        merged.longestStreakAtStreakStart =
-            streak === 0 ? longest
-            : streak < longest ? longest
-            : 0;
-    }
+    merged.longestStreakAtStreakStart = migrateLongestStreakAtStart(merged, saved);
 
     syncTodaySlipCountInLog(merged);
-
     return merged;
-}
-
-/** Backfill slipCount on today's log entry from todayFailCount (legacy saves). */
-function syncTodaySlipCountInLog(s) {
-    if (s.todayStatus !== 'failed' || s.todayFailCount < 2) return;
-    const key = `day-${s.calendarDay}`;
-    const entry = s.dailyLog?.[key];
-    if (entry && logStatus(entry) === 'slip') {
-        entry.slipCount = Math.max(entry.slipCount || 1, s.todayFailCount);
-    }
 }
 
 let state = getDefaultState();
@@ -161,18 +195,47 @@ function replaceState(next) {
     Object.assign(state, next);
 }
 
-// ── Business rules ──────────────────────────────────────
+// ════════════════════════════════════════════════════════
+//  SCORING & JOURNEY RULES
+// ════════════════════════════════════════════════════════
+
+function isBetterJourneyScore(success, failures, best) {
+    return success > best.success
+        || (success === best.success && failures < best.failures);
+}
 
 function updateBestJourney() {
     const { success, failures } = state.score;
-    const best = state.bestJourney;
-    const isBetter =
-        success > best.success ||
-        (success === best.success && failures < best.failures);
-    if (isBetter) {
+    if (isBetterJourneyScore(success, failures, state.bestJourney)) {
         state.bestJourney = { success, failures };
     }
 }
+
+function journeyIsOver(s) {
+    return s.score.failures >= MAX_FAILURES;
+}
+
+function streakSegmentBeforeSlip() {
+    // First slip of the calendar day archives the streak built so far.
+    return state.todayStatus === 'none' ? state.currentStreak : 0;
+}
+
+function isPersonalBestStreak(streak, recordToBeat) {
+    return streak > recordToBeat
+        && recordToBeat > 0
+        && !state.recordCelebrated
+        && !STREAK_MILESTONES[streak];
+}
+
+function markTodayStatus(dateKey, status) {
+    if (dateKey === todayKey()) {
+        state.todayStatus = status;
+    }
+}
+
+// ════════════════════════════════════════════════════════
+//  DAY LOGGING
+// ════════════════════════════════════════════════════════
 
 /**
  * Log a strong day. Updates state only — UI layer handles celebrations.
@@ -180,19 +243,16 @@ function updateBestJourney() {
  */
 function applyStrongDay({ logDate, suppressUI = false } = {}) {
     const dateKey = logDate || todayKey();
-    const calDay  = state.calendarDay;
+    const calDay = state.calendarDay;
 
     state.score.success++;
     state.currentStreak++;
-    state.dailyLog = state.dailyLog || {};
-    state.dailyLog[`day-${calDay}`] = { status: 'strong', day: calDay, date: dateKey };
+
+    writeDailyLog(calDay, { status: 'strong', day: calDay, date: dateKey });
 
     const prevLongest = state.longestStreak;
     const recordToBeat = state.longestStreakAtStreakStart;
-    const isNewRecord = state.currentStreak > recordToBeat
-        && recordToBeat > 0
-        && !state.recordCelebrated
-        && !STREAK_MILESTONES[state.currentStreak];
+    const isNewRecord = isPersonalBestStreak(state.currentStreak, recordToBeat);
 
     if (state.currentStreak > state.longestStreak) {
         state.longestStreak = state.currentStreak;
@@ -202,14 +262,11 @@ function applyStrongDay({ logDate, suppressUI = false } = {}) {
         state.recordCelebrated = true;
     }
 
-    if (state.currentStreak === 50)  state.day50Count++;
+    if (state.currentStreak === 50) state.day50Count++;
     if (state.currentStreak === 100) state.day100Count++;
 
     updateBestJourney();
-
-    if (dateKey === todayKey()) {
-        state.todayStatus = 'success';
-    }
+    markTodayStatus(dateKey, 'success');
 
     return {
         streak: state.currentStreak,
@@ -222,29 +279,28 @@ function applyStrongDay({ logDate, suppressUI = false } = {}) {
 
 function advanceCalendarDay() {
     state.calendarDay++;
-    state.todayStatus    = 'none';
+    state.todayStatus = 'none';
     state.todayFailCount = 0;
 }
 
-/** Log a slip for a given calendar day. */
+/** Log a slip for a given calendar day. Multiple slips same day share one journey chance. */
 function applySlipDay({ logDate, calDay }) {
-    const streakToRecord = state.todayStatus === 'none' ? state.currentStreak : 0;
-    state.currentJourneyStreaks.push(streakToRecord);
+    state.currentJourneyStreaks.push(streakSegmentBeforeSlip());
     state.score.failures++;
     state.longestStreakAtStreakStart = state.longestStreak;
-    state.currentStreak    = 0;
+    state.currentStreak = 0;
     state.recordCelebrated = false;
-    state.dailyLog = state.dailyLog || {};
-    const logKey = `day-${calDay}`;
-    const prev = state.dailyLog[logKey];
-    const slipCount = prev && logStatus(prev) === 'slip' ? (prev.slipCount || 1) + 1 : 1;
-    state.dailyLog[logKey] = { status: 'slip', day: calDay, date: logDate, slipCount };
+
+    writeDailyLog(calDay, {
+        status: 'slip',
+        day: calDay,
+        date: logDate,
+        slipCount: nextSlipCount(calDay),
+    });
+
     state.todayFailCount++;
     updateBestJourney();
-
-    if (logDate === todayKey()) {
-        state.todayStatus = 'failed';
-    }
+    markTodayStatus(logDate, 'failed');
 }
 
 /** Slip for today — single path used by manual fail button. */
@@ -253,9 +309,9 @@ function recordSlipToday() {
     return state.score.failures;
 }
 
-function journeyIsOver(s) {
-    return s.score.failures >= MAX_FAILURES;
-}
+// ════════════════════════════════════════════════════════
+//  ABSENCE / CATCH-UP
+// ════════════════════════════════════════════════════════
 
 function buildGapDayQueue(lastOpenedDate, today) {
     const diffDays = daysBetweenKeys(lastOpenedDate, today);
@@ -279,15 +335,16 @@ function autoStrongAbsentDays(today) {
         return results;
     }
 
-    const diffDays = daysBetweenKeys(state.lastOpenedDate, today);
-    if (diffDays <= 1) {
+    if (daysBetweenKeys(state.lastOpenedDate, today) <= 1) {
         return results;
     }
 
-    // Last-opened day is strong if the user never logged it
+    // Last-opened day counts as strong if the user never logged it.
     if (state.todayStatus === 'none') {
-        const result = applyStrongDay({ logDate: state.lastOpenedDate, suppressUI: true });
-        results.push({ result, suppressUI: true });
+        results.push({
+            result: applyStrongDay({ logDate: state.lastOpenedDate, suppressUI: true }),
+            suppressUI: true,
+        });
     }
 
     const queue = buildGapDayQueue(state.lastOpenedDate, today);
@@ -298,12 +355,18 @@ function autoStrongAbsentDays(today) {
         if (dateKey === today && state.todayStatus === 'failed') continue;
 
         advanceCalendarDay();
-        const result = applyStrongDay({ logDate: dateKey, suppressUI: !isLast });
-        results.push({ result, suppressUI: !isLast });
+        results.push({
+            result: applyStrongDay({ logDate: dateKey, suppressUI: !isLast }),
+            suppressUI: !isLast,
+        });
     }
 
     return results;
 }
+
+// ════════════════════════════════════════════════════════
+//  JOURNEY END
+// ════════════════════════════════════════════════════════
 
 /**
  * Archive journey and reset for next attempt.
@@ -312,19 +375,19 @@ function autoStrongAbsentDays(today) {
 function endJourney() {
     state.completedJourneys.push({
         attempt: state.attempt,
-        score:   { ...state.score },
-        date:    new Date().toISOString(),
+        score: { ...state.score },
+        date: new Date().toISOString(),
     });
 
     state.pastJourneyStreaks.push({
         attempt: state.attempt,
         streaks: [...state.currentJourneyStreaks],
-        date:    new Date().toISOString(),
+        date: new Date().toISOString(),
     });
 
     const comparison = {
         attempt: state.attempt,
-        score:   { ...state.score },
+        score: { ...state.score },
         bestStreak: Math.max(...state.currentJourneyStreaks, 0),
         prevJourney: state.completedJourneys.length >= 2
             ? state.completedJourneys[state.completedJourneys.length - 2]
@@ -332,22 +395,22 @@ function endJourney() {
     };
 
     const survivingUrges = state.urgesSurfed || 0;
-    const survivingLog   = state.urgeLog || [];
+    const survivingLog = state.urgeLog || [];
 
     state.attempt++;
-    state.score                 = { success: 0, failures: 0 };
+    state.score = { success: 0, failures: 0 };
     state.longestStreakAtStreakStart = state.longestStreak;
-    state.currentStreak         = 0;
-    state.calendarDay           = 1;
+    state.currentStreak = 0;
+    state.calendarDay = 1;
     state.currentJourneyStreaks = [];
-    state.recordCelebrated      = false;
-    state.dailyLog              = {};
-    state.todayStatus           = 'none';
-    state.todayFailCount        = 0;
-    state.urgesSurfed           = survivingUrges;
-    state.urgeLog               = survivingLog;
-    state.lastOpenedDate        = '';
-    state.lastCheckedDate       = '';
+    state.recordCelebrated = false;
+    state.dailyLog = {};
+    state.todayStatus = 'none';
+    state.todayFailCount = 0;
+    state.urgesSurfed = survivingUrges;
+    state.urgeLog = survivingLog;
+    state.lastOpenedDate = '';
+    state.lastCheckedDate = '';
 
     return comparison;
 }
