@@ -75,6 +75,78 @@
             background: var(--border);
         }
 
+        /* ── COLLAPSIBLE HISTORY PANELS ── */
+        .collapse-card {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .collapse-header {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
+            touch-action: manipulation;
+        }
+
+        .collapse-header:active {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .collapse-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .collapse-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .collapse-teaser {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .collapse-chevron {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .collapse-chevron.open {
+            transform: rotate(90deg);
+        }
+
+        .collapse-body {
+            display: none;
+            padding: 0 16px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .collapse-body.is-open {
+            display: block;
+        }
+
+        .collapse-body .chart-toggle {
+            margin-top: 14px;
+        }
+
         /* ── KNOWLEDGE CARD ── */
         .knowledge-card.card {
             padding: 16px 18px;

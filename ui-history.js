@@ -1,14 +1,50 @@
 /**
  * ui-history.js — Charts and history views: streak chart, month grid, lifetime stats.
- * Edit here: graph layout, calendar colors, lifetime totals display.
+ * Edit here: graph layout, calendar colors, collapsible month/chart panels.
  */
+
+// ── Collapsible panels (independent — both may be open) ──
+
+function toggleMonthPanel() {
+    monthPanelOpen = !monthPanelOpen;
+    syncHistoryPanels();
+}
+
+function toggleChartPanel() {
+    chartPanelOpen = !chartPanelOpen;
+    syncHistoryPanels();
+}
+
+function syncHistoryPanels() {
+    const monthOpen = monthPanelOpen;
+    const chartOpen = chartPanelOpen;
+
+    document.getElementById('monthPanelBody')?.classList.toggle('is-open', monthOpen);
+    document.getElementById('chartPanelBody')?.classList.toggle('is-open', chartOpen);
+    document.getElementById('monthPanelChevron')?.classList.toggle('open', monthOpen);
+    document.getElementById('chartPanelChevron')?.classList.toggle('open', chartOpen);
+    document.getElementById('monthPanelToggle')?.setAttribute('aria-expanded', monthOpen ? 'true' : 'false');
+    document.getElementById('chartPanelToggle')?.setAttribute('aria-expanded', chartOpen ? 'true' : 'false');
+
+    if (chartOpen) renderChart();
+}
+
+(function initHistoryPanels() {
+    document.getElementById('monthPanelToggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleMonthPanel();
+    });
+    document.getElementById('chartPanelToggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleChartPanel();
+    });
+})();
 
 function switchChartMode(mode) {
     chartMode = mode;
     chartPage = -1;
     document.getElementById('toggleStreaks').classList.toggle('active', mode === 'streaks');
     document.getElementById('toggleJourneys').classList.toggle('active', mode === 'journeys');
-    document.getElementById('chartTitle').textContent = mode === 'streaks' ? 'Streak History' : 'Journey Progress';
     renderChart();
 }
 
@@ -104,7 +140,6 @@ function renderChart() {
             <text x="${VW/2}" y="${padT + cH/2}" text-anchor="middle"
                 font-size="13" fill="rgba(134,134,139,0.6)"
                 font-family="-apple-system,sans-serif">Your history starts today</text>`;
-        document.getElementById('chartSubtitle').textContent = '';
         return;
     }
 
@@ -114,16 +149,6 @@ function renderChart() {
     if (chartPage === -1 || chartPage > maxPage) chartPage = maxPage;
 
     const show = points.slice(chartPage, chartPage + getChartWindow());
-
-    // Subtitle
-    const unit = chartMode === 'journeys' ? 'journey' : 'streak';
-    const from = chartPage + 1, to = chartPage + show.length;
-    document.getElementById('chartSubtitle').textContent =
-        points.length <= getChartWindow()
-            ? `${points.length} ${unit}${points.length !== 1 ? 's' : ''}`
-            : `${chartMode === 'journeys' ? 'J' : 'S'}${from}–${chartMode === 'journeys' ? 'J' : 'S'}${to} of ${points.length}`;
-
-    // Arrows
 
     // ── Layout ───────────────────────────────────────
     // Y scale — fixed to all-time best with 25% headroom
@@ -276,16 +301,17 @@ function renderMonthGrid() {
     const today          = new Date();
     const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
 
-    // Month + year label
+    // Month + year label (inside expanded panel nav)
     const monthName = ref.toLocaleString('default', { month: 'long', year: 'numeric' });
-    document.getElementById('monthGridTitle').textContent = monthName;
+    const navTitle = document.getElementById('monthGridNavTitle');
+    if (navTitle) navTitle.textContent = monthName;
 
     // Disable next arrow if on current month
     const nextBtn = document.getElementById('monthNavNext');
     if (nextBtn) nextBtn.disabled = monthOffset >= 0;
 
     // Disable prev arrow if at journey start month
-    const prevBtn = document.querySelector('.month-nav-btn:first-child');
+    const prevBtn = document.getElementById('monthNavPrev');
     if (prevBtn) {
         const dates = Object.values(log)
             .map(e => (typeof e === 'object') ? e.date : null)

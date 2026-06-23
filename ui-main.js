@@ -8,6 +8,8 @@ let currentTab = 0;
 let chartPage = -1;
 let chartMode = 'streaks';
 let monthOffset = 0;
+let monthPanelOpen = false;
+let chartPanelOpen = false;
 let toastTimer = null;
 let confettiParticles = [];
 let confettiAnimId    = null;
@@ -56,6 +58,7 @@ function renderAll() {
     renderLifetimeStats();
     renderMonthGrid();
     renderChart();
+    syncHistoryPanels();
 }
 
 function renderTopStats() {

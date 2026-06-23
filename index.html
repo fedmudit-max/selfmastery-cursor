@@ -162,40 +162,6 @@
         </div>
     </div>
 
-    <!-- ═══ MONTHLY GRID CARD ═════════════════════════════ -->
-    <div class="card">
-        <div class="chart-header">
-            <button class="month-nav-btn" data-action="month-prev">‹</button>
-            <div style="text-align:center;">
-                <span class="chart-title" id="monthGridTitle">This Month</span>
-            </div>
-            <button class="month-nav-btn" id="monthNavNext" data-action="month-next">›</button>
-        </div>
-        <div class="month-grid" id="monthGrid"></div>
-        <div class="month-legend" id="monthLegend"></div>
-    </div>
-
-    <!-- ═══ HISTORY CHART CARD ════════════════════════════ -->
-    <div class="card">
-        <div class="chart-header">
-            <span class="chart-title" id="chartTitle">Streak History</span>
-            <span class="chart-subtitle" id="chartSubtitle"></span>
-        </div>
-
-        <!-- Streaks | Journeys toggle -->
-        <div class="chart-toggle" id="chartToggle">
-            <button class="chart-toggle-btn active" id="toggleStreaks" data-action="chart-streaks">Streaks</button>
-            <button class="chart-toggle-btn"        id="toggleJourneys" data-action="chart-journeys">Journeys</button>
-        </div>
-
-        <div class="chart-outer" id="chartOuter">
-            <svg class="chart-yaxis" id="chartYAxis" height="180"></svg>
-            <div style="position:relative;flex:1;">
-                <svg class="chart-inner" id="chartInner" height="180" style="width:100%;display:block;"></svg>
-            </div>
-        </div>
-    </div>
-
     <!-- ═══ DAILY KNOWLEDGE CARD ════════════════════════════ -->
     <div class="card knowledge-card" id="knowledgeCard">
         <div style="display:flex;align-items:flex-start;gap:12px;">
@@ -207,9 +173,52 @@
         </div>
     </div>
 
-    <!-- ═══ LIFETIME STATS CARD ══════════════════════════ -->
+    <!-- ═══ MONTHLY GRID (collapsible) ═════════════════════ -->
+    <div class="card collapse-card">
+        <button type="button" class="collapse-header" id="monthPanelToggle" aria-expanded="false" aria-controls="monthPanelBody">
+            <span class="collapse-header-row">
+                <span class="collapse-title">Monthly Grid</span>
+                <span class="collapse-chevron" id="monthPanelChevron" aria-hidden="true">›</span>
+            </span>
+        </button>
+        <div class="collapse-body" id="monthPanelBody">
+            <div class="chart-header">
+                <button class="month-nav-btn" id="monthNavPrev" data-action="month-prev">‹</button>
+                <div style="text-align:center;">
+                    <span class="chart-title" id="monthGridNavTitle">This Month</span>
+                </div>
+                <button class="month-nav-btn" id="monthNavNext" data-action="month-next">›</button>
+            </div>
+            <div class="month-grid" id="monthGrid"></div>
+            <div class="month-legend" id="monthLegend"></div>
+        </div>
+    </div>
+
+    <!-- ═══ PROGRESS CHART (collapsible) ═══════════════════ -->
+    <div class="card collapse-card">
+        <button type="button" class="collapse-header" id="chartPanelToggle" aria-expanded="false" aria-controls="chartPanelBody">
+            <span class="collapse-header-row">
+                <span class="collapse-title">Progress Graph</span>
+                <span class="collapse-chevron" id="chartPanelChevron" aria-hidden="true">›</span>
+            </span>
+        </button>
+        <div class="collapse-body" id="chartPanelBody">
+            <div class="chart-toggle" id="chartToggle">
+                <button class="chart-toggle-btn active" id="toggleStreaks" data-action="chart-streaks">Streaks</button>
+                <button class="chart-toggle-btn" id="toggleJourneys" data-action="chart-journeys">Journeys</button>
+            </div>
+            <div class="chart-outer" id="chartOuter">
+                <svg class="chart-yaxis" id="chartYAxis" height="180"></svg>
+                <div style="position:relative;flex:1;">
+                    <svg class="chart-inner" id="chartInner" height="180" style="width:100%;display:block;"></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ LIFETIME STATS ════════════════════════════════ -->
     <div class="card">
-        <div class="card-section-title">Lifetime Stats</div>
+        <div class="section-label" style="margin-top:0;margin-bottom:12px;">Lifetime</div>
         <div class="lifetime-stats">
             <div class="lifetime-stat">
                 <div class="lifetime-stat-value" id="lifetimeJourneys">1</div>
