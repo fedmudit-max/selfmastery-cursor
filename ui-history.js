@@ -300,20 +300,23 @@ function renderMonthGrid() {
         }
     }
 
-    // Build date→status lookup
-    const dateStatus = {};
+    // Build date → { status, slipCount } lookup
+    const dateInfo = {};
     Object.values(log).forEach(entry => {
         const dateKey = (typeof entry === 'object') ? entry.date : null;
         const status  = logStatus(entry);
-        if (dateKey && status) dateStatus[dateKey] = status;
+        if (!dateKey || !status) return;
+        const slipCount = status === 'slip' ? (entry.slipCount || 1) : 0;
+        dateInfo[dateKey] = { status, slipCount };
     });
 
-    // Count for subtitle
+    // Count for subtitle — total slips, not just slip-days
     let strongCount = 0, slipCount = 0;
     for (let d = 1; d <= daysInMonth; d++) {
         const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        if (dateStatus[key] === 'strong') strongCount++;
-        if (dateStatus[key] === 'slip')   slipCount++;
+        const info = dateInfo[key];
+        if (info?.status === 'strong') strongCount++;
+        if (info?.status === 'slip')   slipCount += info.slipCount;
     }
     subtitle.textContent = strongCount > 0 || slipCount > 0
         ? `${strongCount} strong · ${slipCount} slip${slipCount !== 1 ? 's' : ''}`
@@ -333,15 +336,21 @@ function renderMonthGrid() {
         const key      = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isToday  = isCurrentMonth && d === today.getDate();
         const isFuture = isCurrentMonth && d > today.getDate();
-        const status   = dateStatus[key];
+        const info     = dateInfo[key];
+        const status   = info?.status;
+        const daySlips = info?.slipCount || 0;
 
         let cls = 'month-cell';
         if (status === 'strong') cls += ' strong';
-        else if (status === 'slip') cls += ' slip';
+        else if (status === 'slip') cls += ' slip' + (daySlips > 1 ? ' slip-multi' : '');
         else if (isFuture) cls += ' future';
         if (isToday) cls += ' today';
 
-        html += `<div class="${cls}">${d}</div>`;
+        const slipBadge = status === 'slip' && daySlips > 1
+            ? `<span class="month-slip-count">×${daySlips}</span>`
+            : '';
+
+        html += `<div class="${cls}"><span class="month-cell-day">${d}</span>${slipBadge}</div>`;
     }
 
     grid.innerHTML = html;

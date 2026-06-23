@@ -136,7 +136,19 @@ function mergeSavedState(saved) {
             : 0;
     }
 
+    syncTodaySlipCountInLog(merged);
+
     return merged;
+}
+
+/** Backfill slipCount on today's log entry from todayFailCount (legacy saves). */
+function syncTodaySlipCountInLog(s) {
+    if (s.todayStatus !== 'failed' || s.todayFailCount < 2) return;
+    const key = `day-${s.calendarDay}`;
+    const entry = s.dailyLog?.[key];
+    if (entry && logStatus(entry) === 'slip') {
+        entry.slipCount = Math.max(entry.slipCount || 1, s.todayFailCount);
+    }
 }
 
 let state = getDefaultState();
@@ -223,7 +235,10 @@ function applySlipDay({ logDate, calDay }) {
     state.currentStreak    = 0;
     state.recordCelebrated = false;
     state.dailyLog = state.dailyLog || {};
-    state.dailyLog[`day-${calDay}`] = { status: 'slip', day: calDay, date: logDate };
+    const logKey = `day-${calDay}`;
+    const prev = state.dailyLog[logKey];
+    const slipCount = prev && logStatus(prev) === 'slip' ? (prev.slipCount || 1) + 1 : 1;
+    state.dailyLog[logKey] = { status: 'slip', day: calDay, date: logDate, slipCount };
     state.todayFailCount++;
     updateBestJourney();
 
