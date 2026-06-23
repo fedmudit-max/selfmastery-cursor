@@ -1,6 +1,7 @@
 /** Static content and app constants. */
 const MAX_FAILURES = 10;
 const STORAGE_KEY = 'habitTracker_v3';
+const LAST_BACKUP_KEY = 'kingLastBackupAt';
 const URGE_DURATION_SECS = 15 * 60;
 const TOTAL_SLIDES = 5;
 

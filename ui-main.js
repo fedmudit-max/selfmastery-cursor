@@ -56,6 +56,7 @@ function renderAll() {
     renderBrainCard();
     renderKnowledgeCard();
     renderLifetimeStats();
+    renderBackupStatus();
     renderMonthGrid();
     renderChart();
     syncHistoryPanels();
@@ -65,6 +66,12 @@ function renderTopStats() {
     document.getElementById('calendarDay').textContent    = state.calendarDay;
     document.getElementById('currentJourney').textContent = `${state.score.success}/${state.score.failures}`;
     document.getElementById('bestJourney').textContent    = `${state.bestJourney.success}/${state.bestJourney.failures}`;
+}
+
+function renderBackupStatus() {
+    const el = document.getElementById('lastBackupLabel');
+    if (!el) return;
+    el.textContent = `Last exported: ${formatLastBackupLabel()}`;
 }
 
 function renderChances() {

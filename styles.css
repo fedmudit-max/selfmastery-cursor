@@ -369,64 +369,24 @@
             background: linear-gradient(180deg, #9ca3af, #6b7280);
             box-shadow: none;
         }
-        .btn-reset {
-            grid-column: 1 / -1;
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            font-size: 13px;
-            padding: 10px;
-            border-radius: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            font-family: inherit;
-            box-shadow: none;
-            transition: all 0.2s;
-        }
-
-        .btn-reset:hover {
-            border-color: #ff3b30;
-            color: #ff3b30;
-        }
-
-        .btn-dev {
-            background: rgba(0, 122, 255, 0.08);
-            color: #007aff;
-            border: 1px dashed rgba(0, 122, 255, 0.35);
-            font-size: 13px;
-            padding: 10px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            box-shadow: none;
-            transition: all 0.2s;
-        }
-
-        .btn-dev:hover {
-            background: rgba(0, 122, 255, 0.14);
-        }
-
-        .backup-card .backup-actions {
+        .actions-card .actions-stack {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
             row-gap: 8px;
             width: 100%;
         }
 
-        .backup-card .btn-backup {
+        .actions-card .btn-backup,
+        .actions-card .btn-dev,
+        .actions-card .btn-reset {
             display: block;
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
             margin: 0;
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
             font-size: 13px;
             padding: 10px;
             border-radius: 12px;
-            font-weight: 600;
             cursor: pointer;
             font-family: inherit;
             transition: all 0.2s;
@@ -434,9 +394,46 @@
             appearance: none;
         }
 
-        .backup-card .btn-backup:hover {
+        .actions-card .btn-backup {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        .actions-card .btn-backup:hover {
             border-color: var(--green);
             color: var(--green);
+        }
+
+        .actions-card .btn-dev {
+            background: rgba(0, 122, 255, 0.08);
+            color: #007aff;
+            border: 1px dashed rgba(0, 122, 255, 0.35);
+            font-weight: 600;
+        }
+
+        .actions-card .btn-dev:hover {
+            background: rgba(0, 122, 255, 0.14);
+        }
+
+        .actions-card .btn-reset {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            font-weight: 500;
+        }
+
+        .actions-card .btn-reset:hover {
+            border-color: #ff3b30;
+            color: #ff3b30;
+        }
+
+        .backup-status {
+            margin: 2px 0 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
         }
 
         /* ── TABS (iOS segmented control) ───────────────── */

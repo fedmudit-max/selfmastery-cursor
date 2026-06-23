@@ -99,6 +99,22 @@ function parseBackupJson(text) {
     };
 }
 
+function recordLastBackupAt(iso) {
+    safeSet(LAST_BACKUP_KEY, iso || new Date().toISOString());
+}
+
+function clearLastBackupAt() {
+    safeRemove(LAST_BACKUP_KEY);
+}
+
+function formatLastBackupLabel() {
+    const raw = safeGet(LAST_BACKUP_KEY);
+    if (!raw) return 'Never';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return 'Never';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 // ════════════════════════════════════════════════════════
 //  DATES — local timezone; never parse YYYY-MM-DD as UTC
 // ════════════════════════════════════════════════════════

@@ -237,19 +237,16 @@
         </div>
     </div>
 
-    <!-- ═══ BACKUP ═══════════════════════════════════════ -->
-    <div class="card backup-card">
-        <div class="backup-actions">
+    <!-- ═══ BACKUP & TOOLS ═══════════════════════════════ -->
+    <div class="card actions-card">
+        <div class="actions-stack">
             <button class="btn-backup" type="button" data-action="export-backup">Export Progress</button>
             <button class="btn-backup" type="button" data-action="import-backup">Import Progress</button>
+            <p class="backup-status" id="lastBackupLabel">Last exported: Never</p>
+            <button class="btn-dev" type="button" data-action="dev-next-day">⏭ Test: Next Day</button>
+            <button class="btn-reset" type="button" data-action="modal-reset">↺ Reset All Data</button>
         </div>
         <input type="file" id="importFileInput" accept=".json,application/json" hidden>
-    </div>
-
-    <!-- ═══ RESET CARD ════════════════════════════════════ -->
-    <div class="card" style="text-align:center;">
-        <button class="btn-dev" data-action="dev-next-day" style="width:100%;margin-bottom:10px;">⏭ Test: Next Day</button>
-        <button class="btn-reset" data-action="modal-reset" style="width:100%;">↺ Reset All Data</button>
     </div>
 
 </div><!-- .container -->

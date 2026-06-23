@@ -28,7 +28,7 @@ function showModal(action) {
     document.getElementById('modalConfirmBtn').textContent =
         action === 'success' ? 'Confirm' :
         action === 'reset'   ? 'Yes, reset all' :
-        action === 'import'  ? 'Restore backup' :
+        action === 'import'  ? 'Restore progress' :
         'Yes, log it';
 
     // Show RESET input only for reset action
@@ -85,6 +85,7 @@ function confirmAction() {
 function resetAll() {
     safeRemove(STORAGE_KEY);
     safeRemove('onboardingComplete');
+    clearLastBackupAt();
     replaceState(getDefaultState());
     chartPage = -1;
     chartMode = 'streaks';
@@ -158,12 +159,12 @@ function checkJourneyMilestone(successCount, suppressUI = false) {
 // ════════════════════════════════════════════════════════
 
 function formatImportConfirmMessage() {
-    if (!pendingImportBackup) return 'Restore this backup? Current progress on this device will be replaced.';
+    if (!pendingImportBackup) return 'Restore this export? Current progress on this device will be replaced.';
     const when = pendingImportBackup.exportedAt
         ? new Date(pendingImportBackup.exportedAt).toLocaleString()
         : 'an earlier save';
     const journey = pendingImportBackup.state?.attempt || 1;
-    return `Restore backup from ${when}? (Journey ${journey}) This replaces your current progress on this device.`;
+    return `Restore progress exported ${when}? (Journey ${journey}) This replaces your current progress on this device.`;
 }
 
 function isMobileDevice() {
@@ -183,6 +184,11 @@ function downloadBackupFile(json, filename) {
     window.setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
+function finishBackupExport(iso) {
+    recordLastBackupAt(iso);
+    renderBackupStatus();
+}
+
 function exportProgressBackup() {
     if (!isMobileDevice()) {
         showToast(0, 'Export is available on your phone — open the King app there.');
@@ -193,20 +199,26 @@ function exportProgressBackup() {
     const json = JSON.stringify(payload, null, 2);
     const filename = `king-backup-${todayKey()}.json`;
     const file = new File([json], filename, { type: 'application/json' });
+    const exportedAt = payload.exportedAt;
 
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        navigator.share({ files: [file], title: 'King backup' })
-            .then(() => showToast(0, 'Backup ready — save to Files or iCloud.'))
+        navigator.share({ files: [file], title: 'King progress export' })
+            .then(() => {
+                finishBackupExport(exportedAt);
+                showToast(0, 'Export ready — save to Files or iCloud.');
+            })
             .catch((e) => {
                 if (e?.name === 'AbortError') return;
                 downloadBackupFile(json, filename);
-                showToast(0, 'Backup downloaded.');
+                finishBackupExport(exportedAt);
+                showToast(0, 'Export saved to downloads.');
             });
         return;
     }
 
     downloadBackupFile(json, filename);
-    showToast(0, 'Backup downloaded.');
+    finishBackupExport(exportedAt);
+    showToast(0, 'Export saved to downloads.');
 }
 
 function openImportPicker() {
@@ -229,7 +241,7 @@ function onImportFileSelected(e) {
         if (!result.ok) {
             const msg = result.error === 'invalid-json'
                 ? 'That file is not valid JSON.'
-                : 'That is not a King backup file.';
+                : 'That is not a valid King export file.';
             showToast(0, msg);
             return;
         }
@@ -255,9 +267,10 @@ function restoreImportBackup(backup) {
     chartMode = 'streaks';
     currentTab = 0;
     switchTab(0);
+    if (backup.exportedAt) recordLastBackupAt(backup.exportedAt);
     saveToStorage(state);
     renderAll();
     if (safeGet('onboardingComplete')) checkNewDay();
     else checkOnboarding();
-    showToast(0, 'Progress restored from backup.');
+    showToast(0, 'Progress restored.');
 }
