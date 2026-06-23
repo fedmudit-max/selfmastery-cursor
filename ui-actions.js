@@ -7,6 +7,8 @@
 //  USER ACTIONS
 // ════════════════════════════════════════════════════════
 
+let pendingImportBackup = null;
+
 function handleSuccess() {
     if (state.todayStatus === 'failed') {
         showToast(0, 'You already slipped today. Stay strong tomorrow!');
@@ -21,10 +23,12 @@ function showModal(action) {
     document.getElementById('modalMessage').textContent =
         action === 'success' ? 'Mark today as successful?' :
         action === 'reset'   ? 'Reset all data?' :
+        action === 'import'  ? formatImportConfirmMessage() :
         'Today was hard. Log it and keep going?';
     document.getElementById('modalConfirmBtn').textContent =
         action === 'success' ? 'Confirm' :
         action === 'reset'   ? 'Yes, reset all' :
+        action === 'import'  ? 'Restore backup' :
         'Yes, log it';
 
     // Show RESET input only for reset action
@@ -57,12 +61,15 @@ function closeModal() {
     document.getElementById('resetConfirmInput').value = '';
     document.getElementById('resetConfirmWrap').style.display = 'none';
     pendingAction = null;
+    pendingImportBackup = null;
 }
 
 function confirmAction() {
     const action = pendingAction;
     if (!action) return;
+    const importBackup = action === 'import' ? pendingImportBackup : null;
     pendingAction = null;
+    pendingImportBackup = null;
 
     const confirmBtn = document.getElementById('modalConfirmBtn');
     if (confirmBtn) confirmBtn.disabled = true;
@@ -72,6 +79,7 @@ function confirmAction() {
     if (action === 'success') recordSuccess();
     else if (action === 'fail') recordFailure();
     else if (action === 'reset') resetAll();
+    else if (action === 'import') restoreImportBackup(importBackup);
 }
 
 function resetAll() {
@@ -143,4 +151,113 @@ function checkJourneyMilestone(successCount, suppressUI = false) {
     if (!JOURNEY_MILESTONES[successCount]) return;
     state.journeyMilestones[successCount] = (state.journeyMilestones[successCount] || 0) + 1;
     if (!suppressUI) triggerJourneyMilestone(successCount);
+}
+
+// ════════════════════════════════════════════════════════
+//  BACKUP — export / import JSON on device
+// ════════════════════════════════════════════════════════
+
+function formatImportConfirmMessage() {
+    if (!pendingImportBackup) return 'Restore this backup? Current progress on this device will be replaced.';
+    const when = pendingImportBackup.exportedAt
+        ? new Date(pendingImportBackup.exportedAt).toLocaleString()
+        : 'an earlier save';
+    const journey = pendingImportBackup.state?.attempt || 1;
+    return `Restore backup from ${when}? (Journey ${journey}) This replaces your current progress on this device.`;
+}
+
+function isMobileDevice() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+function downloadBackupFile(json, filename) {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function exportProgressBackup() {
+    if (!isMobileDevice()) {
+        showToast(0, 'Export is available on your phone — open the King app there.');
+        return;
+    }
+
+    const payload = buildBackupPayload();
+    const json = JSON.stringify(payload, null, 2);
+    const filename = `king-backup-${todayKey()}.json`;
+    const file = new File([json], filename, { type: 'application/json' });
+
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        navigator.share({ files: [file], title: 'King backup' })
+            .then(() => showToast(0, 'Backup ready — save to Files or iCloud.'))
+            .catch((e) => {
+                if (e?.name === 'AbortError') return;
+                downloadBackupFile(json, filename);
+                showToast(0, 'Backup downloaded.');
+            });
+        return;
+    }
+
+    downloadBackupFile(json, filename);
+    showToast(0, 'Backup downloaded.');
+}
+
+function openImportPicker() {
+    if (!isMobileDevice()) {
+        showToast(0, 'Import is available on your phone — open the King app there.');
+        return;
+    }
+    document.getElementById('importFileInput')?.click();
+}
+
+function onImportFileSelected(e) {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const result = parseBackupJson(String(reader.result || ''));
+        if (!result.ok) {
+            const msg = result.error === 'invalid-json'
+                ? 'That file is not valid JSON.'
+                : 'That is not a King backup file.';
+            showToast(0, msg);
+            return;
+        }
+        pendingImportBackup = result;
+        showModal('import');
+    };
+    reader.onerror = () => showToast(0, 'Could not read that file.');
+    reader.readAsText(file);
+}
+
+function restoreImportBackup(backup) {
+    if (!backup?.state) {
+        showToast(0, 'Nothing to restore.');
+        return;
+    }
+    replaceState(backup.state);
+    if (backup.onboardingComplete === true) {
+        safeSet('onboardingComplete', 'true');
+    } else if (backup.onboardingComplete === false) {
+        safeRemove('onboardingComplete');
+    }
+    chartPage = -1;
+    chartMode = 'streaks';
+    currentTab = 0;
+    switchTab(0);
+    saveToStorage(state);
+    renderAll();
+    if (safeGet('onboardingComplete')) checkNewDay();
+    else checkOnboarding();
+    showToast(0, 'Progress restored from backup.');
 }

@@ -237,6 +237,15 @@
         </div>
     </div>
 
+    <!-- ═══ BACKUP ═══════════════════════════════════════ -->
+    <div class="card backup-card">
+        <div class="backup-actions">
+            <button class="btn-backup" type="button" data-action="export-backup">Export Progress</button>
+            <button class="btn-backup" type="button" data-action="import-backup">Import Progress</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json,application/json" hidden>
+    </div>
+
     <!-- ═══ RESET CARD ════════════════════════════════════ -->
     <div class="card" style="text-align:center;">
         <button class="btn-dev" data-action="dev-next-day" style="width:100%;margin-bottom:10px;">⏭ Test: Next Day</button>

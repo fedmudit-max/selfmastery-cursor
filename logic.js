@@ -45,6 +45,60 @@ function safeRemove(key) {
     catch { delete _memStorage[key]; }
 }
 
+const BACKUP_FORMAT = 'king-backup';
+const BACKUP_VERSION = 1;
+
+/** Snapshot of app state for export to a JSON file on the user's device. */
+function buildBackupPayload() {
+    return {
+        format: BACKUP_FORMAT,
+        version: BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        onboardingComplete: safeGet('onboardingComplete') === 'true',
+        state: JSON.parse(JSON.stringify(state)),
+    };
+}
+
+/**
+ * Parse an exported backup file (or raw saved state JSON).
+ * @returns {{ ok: true, state, exportedAt, onboardingComplete } | { ok: false, error: string }}
+ */
+function parseBackupJson(text) {
+    let parsed;
+    try {
+        parsed = JSON.parse(text);
+    } catch {
+        return { ok: false, error: 'invalid-json' };
+    }
+    if (!parsed || typeof parsed !== 'object') {
+        return { ok: false, error: 'invalid-json' };
+    }
+
+    let saved = parsed;
+    let exportedAt = null;
+    let onboardingComplete = null;
+
+    if (parsed.format === BACKUP_FORMAT) {
+        if (!parsed.state || typeof parsed.state !== 'object') {
+            return { ok: false, error: 'missing-state' };
+        }
+        saved = parsed.state;
+        exportedAt = parsed.exportedAt || null;
+        onboardingComplete = parsed.onboardingComplete;
+    }
+
+    if (typeof saved.attempt !== 'number' || !saved.score || typeof saved.score !== 'object') {
+        return { ok: false, error: 'not-king-backup' };
+    }
+
+    return {
+        ok: true,
+        state: mergeSavedState(saved),
+        exportedAt,
+        onboardingComplete,
+    };
+}
+
 // ════════════════════════════════════════════════════════
 //  DATES — local timezone; never parse YYYY-MM-DD as UTC
 // ════════════════════════════════════════════════════════

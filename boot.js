@@ -44,6 +44,8 @@ function handleDataAction(e) {
         closeUrge: closeUrge,
         closeCompare: closeCompare,
         'dev-next-day': devAdvanceOneDay,
+        'export-backup': exportProgressBackup,
+        'import-backup': openImportPicker,
     };
     if (actions[action]) actions[action]();
 }
@@ -55,6 +57,7 @@ document.getElementById('celebrationOverlay')?.addEventListener('click', (e) => 
 });
 
 document.getElementById('resetConfirmInput')?.addEventListener('input', checkResetInput);
+document.getElementById('importFileInput')?.addEventListener('change', onImportFileSelected);
 
 // Dynamic HTML (chart SVG, science rows) still uses inline handlers — expose on window.
 window.chartNav = chartNav;

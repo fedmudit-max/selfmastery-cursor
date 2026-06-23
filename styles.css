@@ -407,6 +407,38 @@
             background: rgba(0, 122, 255, 0.14);
         }
 
+        .backup-card .backup-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            row-gap: 8px;
+            width: 100%;
+        }
+
+        .backup-card .btn-backup {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .backup-card .btn-backup:hover {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
         /* ── TABS (iOS segmented control) ───────────────── */
         .tabs {
             display: flex;
