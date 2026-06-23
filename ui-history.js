@@ -260,9 +260,9 @@ function monthNav(dir) {
 }
 
 function renderMonthGrid() {
-    const grid     = document.getElementById('monthGrid');
-    const subtitle = document.getElementById('monthGridSubtitle');
-    const log      = state.dailyLog || {};
+    const grid    = document.getElementById('monthGrid');
+    const legend  = document.getElementById('monthLegend');
+    const log     = state.dailyLog || {};
 
     // Apply monthOffset to get the target month
     const ref   = new Date();
@@ -310,17 +310,35 @@ function renderMonthGrid() {
         dateInfo[dateKey] = { status, slipCount };
     });
 
-    // Count for subtitle — total slips, not just slip-days
-    let strongCount = 0, slipCount = 0;
+    // Month totals for legend
+    let strongCount = 0, slipCount = 0, noLogCount = 0;
     for (let d = 1; d <= daysInMonth; d++) {
         const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const info = dateInfo[key];
+        const isFuture = isCurrentMonth && d > today.getDate();
         if (info?.status === 'strong') strongCount++;
-        if (info?.status === 'slip')   slipCount += info.slipCount;
+        else if (info?.status === 'slip') slipCount += info.slipCount;
+        else if (!isFuture) noLogCount++;
     }
-    subtitle.textContent = strongCount > 0 || slipCount > 0
-        ? `${strongCount} strong · ${slipCount} slip${slipCount !== 1 ? 's' : ''}`
-        : 'Your history starts today';
+
+    if (legend) {
+        legend.innerHTML = `
+            <span class="month-legend-item">
+                <span class="legend-dot strong"></span>
+                <span class="month-legend-count strong">${strongCount}</span>
+                <span>Strong</span>
+            </span>
+            <span class="month-legend-item">
+                <span class="legend-dot slip"></span>
+                <span class="month-legend-count slip">${slipCount}</span>
+                <span>Slip${slipCount !== 1 ? 's' : ''}</span>
+            </span>
+            <span class="month-legend-item">
+                <span class="legend-dot empty"></span>
+                <span class="month-legend-count muted">${noLogCount}</span>
+                <span>No log</span>
+            </span>`;
+    }
 
     // Day labels
     const DAY_LABELS = ['S','M','T','W','T','F','S'];

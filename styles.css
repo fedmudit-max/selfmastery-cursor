@@ -766,11 +766,28 @@
         .month-legend {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 11px;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
             color: var(--text-muted);
             font-weight: 500;
         }
+
+        .month-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .month-legend-count {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .month-legend-count.strong { color: var(--green); }
+        .month-legend-count.slip   { color: #ff3b30; }
+        .month-legend-count.muted  { color: var(--text-muted); }
 
         .legend-dot {
             width: 10px;

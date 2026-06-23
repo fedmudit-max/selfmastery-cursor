@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="King">
-    <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="icon" href="./icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -167,17 +167,12 @@
         <div class="chart-header">
             <button class="month-nav-btn" data-action="month-prev">‹</button>
             <div style="text-align:center;">
-                <span class="chart-title" id="monthGridTitle">This Month</span><br>
-                <span class="chart-subtitle" id="monthGridSubtitle"></span>
+                <span class="chart-title" id="monthGridTitle">This Month</span>
             </div>
             <button class="month-nav-btn" id="monthNavNext" data-action="month-next">›</button>
         </div>
         <div class="month-grid" id="monthGrid"></div>
-        <div class="month-legend">
-            <span class="legend-dot strong"></span><span>Strong</span>
-            <span class="legend-dot slip"></span><span>Slip</span>
-            <span class="legend-dot empty"></span><span>No log</span>
-        </div>
+        <div class="month-legend" id="monthLegend"></div>
     </div>
 
     <!-- ═══ HISTORY CHART CARD ════════════════════════════ -->
