@@ -143,8 +143,8 @@ function completeEndJourney() {
     chartPage = -1;
     saveAndRender();
     setTimeout(() => showJourneyComparison(
-        { attempt: comparison.attempt, score: comparison.score, bestStreak: comparison.bestStreak },
-        comparison.prevJourney
+        { attempt: comparison.attempt, score: comparison.score },
+        comparison.prevBestScore
     ), 600);
 }
 

@@ -443,6 +443,16 @@ function autoStrongAbsentDays(today) {
  * @returns comparison data for the UI popup
  */
 function endJourney() {
+    const prevBestScore = state.completedJourneys.length > 0
+        ? Math.max(...state.completedJourneys.map(j => j.score.success))
+        : null;
+
+    const comparison = {
+        attempt: state.attempt,
+        score: { ...state.score },
+        prevBestScore,
+    };
+
     state.completedJourneys.push({
         attempt: state.attempt,
         score: { ...state.score },
@@ -454,15 +464,6 @@ function endJourney() {
         streaks: [...state.currentJourneyStreaks],
         date: new Date().toISOString(),
     });
-
-    const comparison = {
-        attempt: state.attempt,
-        score: { ...state.score },
-        bestStreak: Math.max(...state.currentJourneyStreaks, 0),
-        prevJourney: state.completedJourneys.length >= 2
-            ? state.completedJourneys[state.completedJourneys.length - 2]
-            : null,
-    };
 
     const survivingUrges = state.urgesSurfed || 0;
     const survivingLog = state.urgeLog || [];
