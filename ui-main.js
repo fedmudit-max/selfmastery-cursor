@@ -94,6 +94,15 @@ function renderButtons() {
     const successBtn = document.getElementById('successBtn');
     const failBtn    = document.getElementById('failBtn');
 
+    if (isAwaitingNextJourney()) {
+        successBtn.disabled = true;
+        successBtn.classList.remove('logged');
+        successBtn.textContent = '✓ I STAYED STRONG';
+        failBtn.disabled = true;
+        failBtn.textContent = 'New journey starts tomorrow';
+        return;
+    }
+
     if (state.todayStatus === 'success') {
         successBtn.disabled = true;
         successBtn.classList.add('logged');

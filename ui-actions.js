@@ -10,6 +10,7 @@
 let pendingImportBackup = null;
 
 function handleSuccess() {
+    if (isAwaitingNextJourney()) return;
     if (state.todayStatus === 'failed') {
         showToast(0, 'You already slipped today. Stay strong tomorrow!');
         return;
@@ -139,7 +140,8 @@ function recordFailure() {
 }
 
 function completeEndJourney() {
-    const comparison = endJourney();
+    const comparison = archiveCompletedJourney();
+    if (!comparison) return;
     chartPage = -1;
     saveAndRender();
     setTimeout(() => showJourneyComparison(

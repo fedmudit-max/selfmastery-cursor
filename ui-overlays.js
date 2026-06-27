@@ -301,6 +301,11 @@ function showJourneyComparison(current, prevBestScore) {
 
     document.getElementById('compareNextNum').textContent = current.attempt + 1;
 
+    const compareBtn = document.querySelector('.btn-compare-close');
+    if (compareBtn) {
+        compareBtn.innerHTML = `Journey ${current.attempt + 1} starts tomorrow`;
+    }
+
     const currentLabel = formatJourneyScore(current.score);
     const prevLabel = prevBestScore ? formatJourneyScore(prevBestScore) : null;
     const hasComparison = prevBestScore !== null;

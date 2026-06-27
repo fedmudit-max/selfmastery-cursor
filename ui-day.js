@@ -12,6 +12,21 @@ function checkNewDay() {
 
     const today = todayKey();
 
+    if (isAwaitingNextJourney()) {
+        if (state.journeyEndedDate && today !== state.journeyEndedDate) {
+            beginNextJourney();
+            state.lastOpenedDate = today;
+            state.lastCheckedDate = today;
+            chartPage = -1;
+            saveToStorage(state);
+            renderAll();
+        } else {
+            state.lastCheckedDate = today;
+            saveToStorage(state);
+        }
+        return;
+    }
+
     if (state.lastCheckedDate === today) return;
 
     if (!state.lastOpenedDate) {
@@ -252,6 +267,16 @@ function completeOnboarding() {
 function devAdvanceOneDay() {
     if (!safeGet('onboardingComplete')) {
         showToast(0, 'Finish onboarding first.');
+        return;
+    }
+
+    if (isAwaitingNextJourney()) {
+        beginNextJourney();
+        state.lastOpenedDate = todayKey();
+        state.lastCheckedDate = todayKey();
+        chartPage = -1;
+        saveAndRender();
+        showToast(state.attempt, `Journey ${state.attempt} started ⏭`);
         return;
     }
 

@@ -223,6 +223,8 @@ function getDefaultState() {
         urgeLog: [],
         dailyLog: {},
         recordCelebrated: false,
+        pendingNextJourney: false,
+        journeyEndedDate: '',
     };
 }
 
@@ -328,8 +330,16 @@ function updateBestJourney() {
     }
 }
 
+function isAwaitingNextJourney() {
+    return !!state.pendingNextJourney;
+}
+
 function journeyIsOver(s) {
     return s.score.failures >= MAX_FAILURES;
+}
+
+function canLogToday() {
+    return !isAwaitingNextJourney() && !journeyIsOver(state);
 }
 
 function streakSegmentBeforeSlip() {
@@ -359,6 +369,16 @@ function markTodayStatus(dateKey, status) {
  * @returns {{ streak, successCount, isNewRecord, prevLongest, recordToBeat }}
  */
 function applyStrongDay({ logDate, suppressUI = false } = {}) {
+    if (!canLogToday()) {
+        return {
+            streak: state.currentStreak,
+            successCount: state.score.success,
+            isNewRecord: false,
+            prevLongest: state.longestStreak,
+            recordToBeat: state.longestStreakAtStreakStart,
+        };
+    }
+
     const dateKey = logDate || todayKey();
     const calDay = state.calendarDay;
 
@@ -486,12 +506,13 @@ function autoStrongAbsentDays(today) {
 // ════════════════════════════════════════════════════════
 
 /**
- * Archive journey and reset for next attempt.
- * @returns comparison data for the UI popup
+ * Archive the completed journey and wait until the next calendar day to begin the next one.
+ * @returns comparison data for the UI popup, or null if already archived
  */
-function endJourney() {
-    const prevBestScore = bestScoreFromCompletedJourneys(state.completedJourneys);
+function archiveCompletedJourney() {
+    if (isAwaitingNextJourney()) return null;
 
+    const prevBestScore = bestScoreFromCompletedJourneys(state.completedJourneys);
     const comparison = {
         attempt: state.attempt,
         score: { ...state.score },
@@ -510,8 +531,15 @@ function endJourney() {
         date: new Date().toISOString(),
     });
 
-    const survivingUrges = state.urgesSurfed || 0;
-    const survivingLog = state.urgeLog || [];
+    state.pendingNextJourney = true;
+    state.journeyEndedDate = todayKey();
+
+    return comparison;
+}
+
+/** Start the next journey after the ended journey's calendar day has passed. */
+function beginNextJourney() {
+    if (!isAwaitingNextJourney()) return;
 
     state.attempt++;
     state.score = { success: 0, failures: 0 };
@@ -523,10 +551,6 @@ function endJourney() {
     state.dailyLog = {};
     state.todayStatus = 'none';
     state.todayFailCount = 0;
-    state.urgesSurfed = survivingUrges;
-    state.urgeLog = survivingLog;
-    state.lastOpenedDate = '';
-    state.lastCheckedDate = '';
-
-    return comparison;
+    state.pendingNextJourney = false;
+    state.journeyEndedDate = '';
 }
