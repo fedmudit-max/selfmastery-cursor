@@ -7,6 +7,36 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
+function dismissLoadScreen() {
+    const ls = document.getElementById('loadScreen');
+    if (!ls) return;
+    ls.style.pointerEvents = 'none';
+    ls.style.opacity = '0';
+    setTimeout(() => { ls.style.display = 'none'; }, 300);
+}
+
+function showFileProtocolBanner() {
+    if (location.protocol !== 'file:') return;
+    const bar = document.createElement('div');
+    bar.id = 'fileProtocolBanner';
+    bar.textContent = 'Opened as a local file — run a local server for full PWA support. Onboarding and saves still work this session.';
+    bar.style.cssText = [
+        'position:fixed',
+        'left:12px',
+        'right:12px',
+        'bottom:12px',
+        'z-index:5000',
+        'padding:10px 12px',
+        'border-radius:12px',
+        'background:#1d1d1f',
+        'color:#fff',
+        'font:600 12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif',
+        'text-align:center',
+        'box-shadow:0 8px 24px rgba(0,0,0,0.25)',
+    ].join(';');
+    document.body.appendChild(bar);
+}
+
 (function () {
     'use strict';
     if (window.__KING_NOFAP_BOOTED__) return;
@@ -31,6 +61,8 @@ function handleDataAction(e) {
         'tab-2': () => switchTab(2),
         'month-prev': () => monthNav(-1),
         'month-next': () => monthNav(1),
+        'chart-prev': () => chartNav(-1),
+        'chart-next': () => chartNav(1),
         'chart-streaks': () => switchChartMode('streaks'),
         'chart-journeys': () => switchChartMode('journeys'),
         onboardingNext: onboardingNext,
@@ -64,18 +96,18 @@ window.chartNav = chartNav;
 window.toggleSciencePhase = toggleSciencePhase;
 
 // Dismiss load screen early so it never blocks taps if init throws later.
-setTimeout(() => {
-    const ls = document.getElementById('loadScreen');
-    if (ls) {
-        ls.style.pointerEvents = 'none';
-        ls.style.opacity = '0';
-        setTimeout(() => { ls.style.display = 'none'; }, 300);
-    }
-}, 400);
+setTimeout(dismissLoadScreen, 400);
 
-init();
+try {
+    init();
+} catch (err) {
+    console.error('King init failed:', err);
+}
 checkOnboarding();
-if (safeGet('onboardingComplete')) checkNewDay();
+showFileProtocolBanner();
+if (safeGet('onboardingComplete')) {
+    try { checkNewDay(); } catch (err) { console.error('King day check failed:', err); }
+}
 
 // Re-check day when user returns to app from background
 document.addEventListener('visibilitychange', () => {

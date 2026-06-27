@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>King — NoFap Journey Tracker</title>
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json">
+    <script>
+    (function () {
+        if (location.protocol === 'file:') return;
+        var link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = './manifest.json';
+        document.head.appendChild(link);
+    })();
+    </script>
     <meta name="theme-color" content="#34c759">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -213,6 +220,10 @@
                     <svg class="chart-inner" id="chartInner" height="180" style="width:100%;display:block;"></svg>
                 </div>
             </div>
+            <div class="chart-nav-row" id="chartNavRow">
+                <button type="button" class="month-nav-btn" id="chartNavPrev" data-action="chart-prev" aria-label="Earlier streaks">‹</button>
+                <button type="button" class="month-nav-btn" id="chartNavNext" data-action="chart-next" aria-label="Later streaks">›</button>
+            </div>
         </div>
     </div>
 
@@ -231,7 +242,7 @@
             </div>
             <div class="lifetime-stat-divider"></div>
             <div class="lifetime-stat">
-                <div class="lifetime-stat-value red" id="lifetimeRelapses">0</div>
+                <div class="lifetime-stat-value grey" id="lifetimeRelapses">0</div>
                 <div class="lifetime-stat-label">Relapses</div>
             </div>
         </div>
@@ -386,7 +397,7 @@
     <div class="overlay-card compare-card">
         <div class="compare-header">
             <div class="compare-badge">JOURNEY COMPLETE</div>
-            <div class="compare-title" id="compareTitleText">Journey 2 vs Journey 1</div>
+            <div class="compare-title" id="compareTitleText">Journey Complete</div>
         </div>
         <div class="compare-grid" id="compareGrid"></div>
         <div class="compare-message" id="compareMessage"></div>

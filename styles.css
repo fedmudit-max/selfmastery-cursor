@@ -69,7 +69,7 @@
         }
 
         .lifetime-stat-value.green { color: var(--green); }
-        .lifetime-stat-value.red   { color: #ff453a; }
+        .lifetime-stat-value.grey  { color: var(--text-muted); }
 
         .lifetime-stat-label {
             font-size: 12px;
@@ -586,6 +586,13 @@
             align-items: stretch;
         }
 
+        .chart-nav-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
         .chart-yaxis { flex-shrink: 0; width: 36px; height: 180px; }
         .chart-inner { display: block; width: 100%; height: 180px; }
 
@@ -785,13 +792,14 @@
 
         /* ── MONTHLY GRID ── */
         .month-nav-btn {
-            background: none;
-            border: 1.5px solid var(--border);
+            background: rgba(52, 199, 89, 0.1);
+            border: 1.5px solid rgba(52, 199, 89, 0.35);
             border-radius: 8px;
             width: 32px;
             height: 32px;
             font-size: 18px;
-            color: var(--text-muted);
+            font-weight: 700;
+            color: var(--green);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -801,8 +809,23 @@
             transition: all 0.15s;
         }
 
-        .month-nav-btn:hover { background: var(--bg); color: var(--text); }
-        .month-nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+        .month-nav-btn:hover:not(:disabled) {
+            background: rgba(52, 199, 89, 0.16);
+            border-color: var(--green);
+            color: var(--green-light);
+        }
+
+        .month-nav-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .month-nav-btn:disabled {
+            opacity: 1;
+            background: rgba(52, 199, 89, 0.05);
+            border-color: rgba(52, 199, 89, 0.15);
+            color: rgba(52, 199, 89, 0.35);
+            cursor: not-allowed;
+        }
         .month-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);

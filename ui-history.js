@@ -52,7 +52,20 @@ function switchChartMode(mode) {
 //  STREAK CHART
 // ════════════════════════════════════════════════════════
 
-function getChartWindow() { return chartMode === 'journeys' ? 4 : 5; }
+function getChartWindow() {
+    return chartMode === 'journeys' ? 4 : 10;
+}
+
+function updateChartNavButtons(canGoLeft, canGoRight, hasNav) {
+    const prevBtn = document.getElementById('chartNavPrev');
+    const nextBtn = document.getElementById('chartNavNext');
+    const row = document.getElementById('chartNavRow');
+    if (!prevBtn || !nextBtn || !row) return;
+
+    row.style.display = hasNav ? 'flex' : 'none';
+    prevBtn.disabled = !canGoLeft;
+    nextBtn.disabled = !canGoRight;
+}
 
 /**
  * Returns data points for the chart based on current chartMode.
@@ -91,11 +104,10 @@ function getChartPoints() {
 }
 
 function chartNav(dir) {
-    const points  = getChartPoints();
+    const points = getChartPoints();
     const maxPage = Math.max(0, points.length - getChartWindow());
     if (chartPage === -1) chartPage = maxPage;
-    const jump = Math.max(1, Math.floor(points.length / 5));
-    chartPage = clamp(chartPage + dir * jump, 0, maxPage);
+    chartPage = clamp(chartPage + dir, 0, maxPage);
     renderChart();
 }
 
@@ -113,6 +125,7 @@ function renderChart() {
 
     if (points.length === 0) {
         outer.style.display = 'flex';
+        updateChartNavButtons(false, false, false);
 
         // Empty graph — show axes with default scale of 30
         const yMax = 30;
@@ -181,7 +194,7 @@ function renderChart() {
     const isCurrentBest = state.currentStreak > 0 && state.currentStreak === state.longestStreak;
 
     const pts = show.map((p, i) => ({
-        x:          show.length === 1 ? VW / 2 : padX + (i / (show.length - 1)) * (VW - padX * 2 - 24),
+        x:          show.length === 1 ? VW / 2 : padX + (i / (show.length - 1)) * (VW - padX * 2),
         y:          padT + cH - (p.val / yMax) * cH,
         val:        p.val,
         label:      p.label,
@@ -217,28 +230,11 @@ function renderChart() {
                 font-family="-apple-system,sans-serif">${p.label}</text>`;
     }).join('');
 
-    // Arrow enable states
-    const canGoLeft  = chartPage > 0;
+    // Nav buttons — symmetric row above chart (same size, opposite sides)
+    const canGoLeft = chartPage > 0;
     const canGoRight = chartPage < maxPage;
-    const hasNav     = points.length > getChartWindow();
-
-    // Left arrow drawn in the Y axis SVG — same vertical position as the "0" label
-    const zeroLabelY = padT + cH + 18; // matches y of the 0 label text
-    yAxisSvg.innerHTML += hasNav ? `
-        <text x="22" y="${zeroLabelY}" text-anchor="end" font-size="18"
-            font-family="-apple-system,sans-serif"
-            fill="${canGoLeft ? '#34c759' : 'rgba(134,134,139,0.25)'}"
-            style="cursor:${canGoLeft ? 'pointer' : 'default'}"
-            onclick="${canGoLeft ? 'chartNav(-1)' : ''}">&#9664;</text>` : '';
-
-    // Right arrow inside chartInner, just past the last data point
-    const lastPtX = pts.length > 0 ? pts[pts.length - 1].x : VW - padX;
-    const arrowsSVG = hasNav ? `
-        <text x="${lastPtX + 18}" y="${zeroLabelY}" font-size="18"
-            font-family="-apple-system,sans-serif"
-            fill="${canGoRight ? '#34c759' : 'rgba(134,134,139,0.25)'}"
-            style="cursor:${canGoRight ? 'pointer' : 'default'}"
-            onclick="${canGoRight ? 'chartNav(1)' : ''}">&#9654;</text>` : '';
+    const hasNav = points.length > getChartWindow();
+    updateChartNavButtons(canGoLeft, canGoRight, hasNav);
 
     // ── Render ────────────────────────────────────────
     document.getElementById('chartInner').setAttribute('viewBox', `0 0 ${VW} ${H}`);
@@ -253,8 +249,7 @@ function renderChart() {
         ${pts.length > 1 ? `<polygon points="${polyPoints}" fill="url(#areaGrad)"/>` : ''}
         ${pts.length > 1 ? `<path d="${linePath}" fill="none" stroke="#34c759"
             stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
-        ${nodes}
-        ${arrowsSVG}`;
+        ${nodes}`;
 }
 
 // ════════════════════════════════════════════════════════
