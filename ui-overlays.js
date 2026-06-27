@@ -293,7 +293,7 @@ function closeUrge() {
 /**
  * Shows the journey comparison card.
  * @param {object} current - { attempt, score: { success, failures } }
- * @param {number|null} prevBestScore - best strong-day count from prior journeys, or null on first journey
+ * @param {{ success: number, failures: number }|null} prevBestScore - best from prior journeys
  */
 function showJourneyComparison(current, prevBestScore) {
     document.getElementById('compareTitleText').textContent =
@@ -301,47 +301,41 @@ function showJourneyComparison(current, prevBestScore) {
 
     document.getElementById('compareNextNum').textContent = current.attempt + 1;
 
-    const stats = [{
-        label: 'Strong Days',
-        current: current.score.success,
-        prev: prevBestScore,
-    }];
+    const currentLabel = formatJourneyScore(current.score);
+    const prevLabel = prevBestScore ? formatJourneyScore(prevBestScore) : null;
+    const hasComparison = prevBestScore !== null;
 
-    const grid = document.getElementById('compareGrid');
-    grid.innerHTML = stats.map(stat => {
-        const hasComparison = stat.prev !== null;
-        const currentVal = stat.current;
-        const prevVal = stat.prev;
+    let cssClass = '';
+    if (hasComparison) {
+        const better = isBetterJourneyScore(
+            current.score.success,
+            current.score.failures,
+            prevBestScore,
+        );
+        const same = current.score.success === prevBestScore.success
+            && current.score.failures === prevBestScore.failures;
+        cssClass = same ? 'same' : better ? '' : 'worse';
+    }
 
-        let cssClass = '';
-        if (hasComparison) {
-            const better = Number(currentVal) > Number(prevVal);
-            const same = Number(currentVal) === Number(prevVal);
-            cssClass = same ? 'same' : better ? '' : 'worse';
-        }
-
-        return `
-            <div class="compare-stat">
-                <div class="compare-stat-label">${hasComparison ? 'Strong Days vs Best Score' : 'Strong Days'}</div>
-                <div class="compare-stat-values">
-                    ${hasComparison ? `<span class="compare-val-old">${prevVal}</span><span class="compare-arrow">→</span>` : ''}
-                    <span class="compare-val-new ${cssClass}">${currentVal}</span>
-                </div>
-            </div>`;
-    }).join('');
+    document.getElementById('compareGrid').innerHTML = `
+        <div class="compare-stat">
+            <div class="compare-stat-label">${hasComparison ? 'Score vs Best Score' : 'Best Score'}</div>
+            <div class="compare-stat-values">
+                ${hasComparison ? `<span class="compare-val-old">${prevLabel}</span><span class="compare-arrow">→</span>` : ''}
+                <span class="compare-val-new ${cssClass}">${currentLabel}</span>
+            </div>
+        </div>`;
 
     let message = '';
-    if (prevBestScore === null) {
-        message = `Your first journey ends here — ${current.score.success} strong days. This is your starting best score. Every journey after this builds on it.`;
+    if (!hasComparison) {
+        message = `Your first journey ends here — ${currentLabel}. This is your starting best score. Every journey after this builds on it.`;
+    } else if (isBetterJourneyScore(current.score.success, current.score.failures, prevBestScore)) {
+        message = `Your next journey to go beyond ${current.score.success} days.`;
+    } else if (current.score.success === prevBestScore.success
+        && current.score.failures === prevBestScore.failures) {
+        message = `You matched your best score — ${prevLabel}. Now push past it next time.`;
     } else {
-        const diff = current.score.success - prevBestScore;
-        if (diff > 0) {
-            message = `📈 New best score — ${current.score.success} strong days! Previous best: ${prevBestScore}.`;
-        } else if (diff < 0) {
-            message = `Your best score stays at ${prevBestScore} strong days. This journey: ${current.score.success}. Journey ${current.attempt + 1} starts fresh.`;
-        } else {
-            message = `You matched your best score — ${prevBestScore} strong days. Now push past it next time.`;
-        }
+        message = `Your best score stays at ${prevLabel}. This journey: ${currentLabel}. Journey ${current.attempt + 1} starts fresh.`;
     }
     document.getElementById('compareMessage').textContent = message;
 

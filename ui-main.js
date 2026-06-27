@@ -65,7 +65,7 @@ function renderAll() {
 function renderTopStats() {
     document.getElementById('calendarDay').textContent    = state.calendarDay;
     document.getElementById('currentJourney').textContent = `${state.score.success}/${state.score.failures}`;
-    document.getElementById('bestJourney').textContent    = `${state.bestJourney.success}/${state.bestJourney.failures}`;
+    document.getElementById('bestJourney').textContent    = formatJourneyScore(getDisplayBestJourney());
 }
 
 function renderBackupStatus() {

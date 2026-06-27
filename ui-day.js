@@ -230,12 +230,18 @@ function onboardingNext() {
 function completeOnboarding() {
     safeSet('onboardingComplete', 'true');
     const overlay = document.getElementById('onboardingOverlay');
+    if (!overlay) return;
     overlay.classList.add('hidden');
-    setTimeout(() => overlay.style.display = 'none', 400);
-    if (!state.lastOpenedDate) {
-        state.lastOpenedDate = todayKey();
-        state.lastCheckedDate = todayKey();
-        saveToStorage(state);
+    overlay.style.pointerEvents = 'none';
+    setTimeout(() => { overlay.style.display = 'none'; }, 400);
+    try {
+        if (!state.lastOpenedDate) {
+            state.lastOpenedDate = todayKey();
+            state.lastCheckedDate = todayKey();
+            saveToStorage(state);
+        }
+    } catch (err) {
+        console.error('King onboarding save failed:', err);
     }
 }
 

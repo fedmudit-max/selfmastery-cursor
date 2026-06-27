@@ -52,8 +52,11 @@ function switchChartMode(mode) {
 //  STREAK CHART
 // ════════════════════════════════════════════════════════
 
+const STREAKS_PER_PAGE = 10;
+const JOURNEYS_PER_PAGE = 4;
+
 function getChartWindow() {
-    return chartMode === 'journeys' ? 4 : 10;
+    return chartMode === 'journeys' ? JOURNEYS_PER_PAGE : STREAKS_PER_PAGE;
 }
 
 function updateChartNavButtons(canGoLeft, canGoRight, hasNav) {
@@ -67,46 +70,105 @@ function updateChartNavButtons(canGoLeft, canGoRight, hasNav) {
     nextBtn.disabled = !canGoRight;
 }
 
-/**
- * Returns data points for the chart based on current chartMode.
- * Streaks mode: every individual streak across all journeys.
- * Journeys mode: total strong days per completed journey.
- */
-function getChartPoints() {
-    if (chartMode === 'journeys') {
-        // One point per completed journey
-        const points = state.completedJourneys.map(j => ({
-            val:   j.score.success,
-            label: `J${j.attempt}`,
-        }));
-        // Add current in-progress journey if it has any strong days
-        if (state.score.success > 0) {
-            points.push({ val: state.score.success, label: `J${state.attempt}…`, live: true });
-        }
-        return points;
+/** Completed + current journeys with their streak segments. */
+function getJourneyStreakEntries() {
+    const entries = state.pastJourneyStreaks.map(journey => ({
+        attempt: journey.attempt,
+        streaks: [...(journey.streaks || [])],
+        isLive: false,
+    }));
+
+    const currentStreaks = [...(state.currentJourneyStreaks || [])];
+    const hasLiveStreak = state.currentStreak > 0;
+    if (currentStreaks.length > 0 || hasLiveStreak) {
+        entries.push({
+            attempt: state.attempt,
+            streaks: currentStreaks,
+            currentStreak: state.currentStreak,
+            isLive: true,
+        });
     }
 
-    // Streaks mode — every individual streak in order
-    const points = [];
-    let num = 1;
-    state.pastJourneyStreaks.forEach(journey => {
-        (journey.streaks || []).forEach(val => {
-            points.push({ val, label: `S${num++}` });
+    return entries;
+}
+
+/** Streak mode: one journey per page slice (max 10 streaks, never mixed across journeys). */
+function buildStreakChartPages() {
+    const pages = [];
+    let streakNum = 1;
+
+    getJourneyStreakEntries().forEach(journey => {
+        const journeyPoints = [];
+
+        journey.streaks.forEach(val => {
+            journeyPoints.push({ val, label: `S${streakNum++}` });
         });
+        if (journey.isLive && journey.currentStreak > 0) {
+            journeyPoints.push({
+                val: journey.currentStreak,
+                label: `S${streakNum}…`,
+                live: true,
+            });
+            streakNum++;
+        }
+
+        for (let i = 0; i < journeyPoints.length; i += STREAKS_PER_PAGE) {
+            pages.push({
+                attempt: journey.attempt,
+                points: journeyPoints.slice(i, i + STREAKS_PER_PAGE),
+            });
+        }
     });
-    (state.currentJourneyStreaks || []).forEach(val => {
-        points.push({ val, label: `S${num++}` });
-    });
-    if (state.currentStreak > 0) {
-        points.push({ val: state.currentStreak, label: `S${num}…`, live: true });
+
+    return pages;
+}
+
+function getAllStreakPoints() {
+    return buildStreakChartPages().flatMap(page => page.points);
+}
+
+/**
+ * Returns data points for journeys chart mode (one point per journey).
+ */
+function getJourneyChartPoints() {
+    const points = state.completedJourneys.map(j => ({
+        val: j.score.success,
+        label: `J${j.attempt}`,
+    }));
+    if (state.score.success > 0) {
+        points.push({ val: state.score.success, label: `J${state.attempt}…`, live: true });
     }
     return points;
 }
 
+function getChartPagination() {
+    if (chartMode === 'journeys') {
+        const points = getJourneyChartPoints();
+        const maxPage = Math.max(0, points.length - JOURNEYS_PER_PAGE);
+        if (chartPage === -1 || chartPage > maxPage) chartPage = maxPage;
+        return {
+            points,
+            show: points.slice(chartPage, chartPage + JOURNEYS_PER_PAGE),
+            maxPage,
+            hasNav: points.length > JOURNEYS_PER_PAGE,
+        };
+    }
+
+    const pages = buildStreakChartPages();
+    const maxPage = Math.max(0, pages.length - 1);
+    if (chartPage === -1 || chartPage > maxPage) chartPage = maxPage;
+    const page = pages[chartPage] || { points: [] };
+    return {
+        points: getAllStreakPoints(),
+        show: page.points,
+        maxPage,
+        hasNav: pages.length > 1,
+        journeyAttempt: page.attempt,
+    };
+}
+
 function chartNav(dir) {
-    const points = getChartPoints();
-    const maxPage = Math.max(0, points.length - getChartWindow());
-    if (chartPage === -1) chartPage = maxPage;
+    const { maxPage } = getChartPagination();
     chartPage = clamp(chartPage + dir, 0, maxPage);
     renderChart();
 }
@@ -115,15 +177,17 @@ function chartNav(dir) {
 function clamp(val, min, max) { return Math.min(max, Math.max(min, val)); }
 
 function renderChart() {
-    const points  = getChartPoints();
-    const outer   = document.getElementById('chartOuter');
+    const outer = document.getElementById('chartOuter');
     const H = 180, padT = 24, padB = 36;
     const cH = H - padT - padB;
     const VW = 400;
     const padX = VW * 0.04;
     const yFracs = [0, 0.25, 0.5, 0.75, 1];
 
-    if (points.length === 0) {
+    const pagination = getChartPagination();
+    const { points, show, maxPage, hasNav } = pagination;
+
+    if (points.length === 0 || show.length === 0) {
         outer.style.display = 'flex';
         updateChartNavButtons(false, false, false);
 
@@ -157,11 +221,6 @@ function renderChart() {
     }
 
     outer.style.display = 'flex';
-
-    const maxPage = Math.max(0, points.length - getChartWindow());
-    if (chartPage === -1 || chartPage > maxPage) chartPage = maxPage;
-
-    const show = points.slice(chartPage, chartPage + getChartWindow());
 
     // ── Layout ───────────────────────────────────────
     // Y scale — fixed to all-time best with 25% headroom
@@ -230,10 +289,8 @@ function renderChart() {
                 font-family="-apple-system,sans-serif">${p.label}</text>`;
     }).join('');
 
-    // Nav buttons — symmetric row above chart (same size, opposite sides)
     const canGoLeft = chartPage > 0;
     const canGoRight = chartPage < maxPage;
-    const hasNav = points.length > getChartWindow();
     updateChartNavButtons(canGoLeft, canGoRight, hasNav);
 
     // ── Render ────────────────────────────────────────

@@ -31,18 +31,33 @@ function saveToStorage(stateObj) {
 }
 
 function safeGet(key) {
-    try { return localStorage.getItem(key); }
-    catch { return _memStorage[key] ?? null; }
+    try {
+        const v = localStorage.getItem(key);
+        if (v !== null) return v;
+    } catch { /* file:// or private mode */ }
+    try {
+        const v = sessionStorage.getItem(key);
+        if (v !== null) return v;
+    } catch { /* same */ }
+    return _memStorage[key] ?? null;
 }
 
 function safeSet(key, val) {
-    try { localStorage.setItem(key, val); }
-    catch { _memStorage[key] = val; }
+    try {
+        localStorage.setItem(key, val);
+        return;
+    } catch { /* file:// or private mode */ }
+    try {
+        sessionStorage.setItem(key, val);
+        return;
+    } catch { /* same */ }
+    _memStorage[key] = val;
 }
 
 function safeRemove(key) {
-    try { localStorage.removeItem(key); }
-    catch { delete _memStorage[key]; }
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+    try { sessionStorage.removeItem(key); } catch { /* ignore */ }
+    delete _memStorage[key];
 }
 
 const BACKUP_FORMAT = 'king-backup';
@@ -269,9 +284,41 @@ function replaceState(next) {
 //  SCORING & JOURNEY RULES
 // ════════════════════════════════════════════════════════
 
+function formatJourneyScore(score) {
+    return `${score.success}/${score.failures}`;
+}
+
 function isBetterJourneyScore(success, failures, best) {
-    return success > best.success
-        || (success === best.success && failures < best.failures);
+    if (success > best.success) return true;
+    if (success < best.success) return false;
+    // Same strong-day count — at 9–10 failures the full score (including failures) counts.
+    if (failures >= MAX_FAILURES - 1) {
+        return failures >= best.failures;
+    }
+    return failures < best.failures;
+}
+
+function pickBetterJourneyScore(candidate, best) {
+    return isBetterJourneyScore(candidate.success, candidate.failures, best)
+        ? { success: candidate.success, failures: candidate.failures }
+        : { success: best.success, failures: best.failures };
+}
+
+function bestScoreFromCompletedJourneys(journeys) {
+    if (!journeys.length) return null;
+    return journeys.reduce(
+        (best, journey) => pickBetterJourneyScore(journey.score, best),
+        { success: 0, failures: 0 },
+    );
+}
+
+/** Best score shown in the header — includes live 9/10-failure progress. */
+function getDisplayBestJourney() {
+    const { success, failures } = state.score;
+    if (failures >= MAX_FAILURES - 1) {
+        return pickBetterJourneyScore({ success, failures }, state.bestJourney);
+    }
+    return state.bestJourney;
 }
 
 function updateBestJourney() {
@@ -443,9 +490,7 @@ function autoStrongAbsentDays(today) {
  * @returns comparison data for the UI popup
  */
 function endJourney() {
-    const prevBestScore = state.completedJourneys.length > 0
-        ? Math.max(...state.completedJourneys.map(j => j.score.success))
-        : null;
+    const prevBestScore = bestScoreFromCompletedJourneys(state.completedJourneys);
 
     const comparison = {
         attempt: state.attempt,
