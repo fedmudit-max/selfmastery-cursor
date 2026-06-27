@@ -79,6 +79,11 @@
         </div>
     </div>
 
+    <!-- ═══ WEEKLY STREAK CARD ═════════════════════════════ -->
+    <div class="card weekly-streak-card">
+        <div class="weekly-streak-track" id="weeklyStreakTrack"></div>
+    </div>
+
     <!-- ═══ MILESTONES CARD ════════════════════════════════ -->
     <div class="card">
         <div class="tabs">
@@ -227,23 +232,30 @@
         </div>
     </div>
 
-    <!-- ═══ LIFETIME STATS ════════════════════════════════ -->
-    <div class="card">
-        <div class="section-label" style="margin-top:0;margin-bottom:12px;">Lifetime</div>
-        <div class="lifetime-stats">
-            <div class="lifetime-stat">
-                <div class="lifetime-stat-value" id="lifetimeJourneys">1</div>
-                <div class="lifetime-stat-label">Journeys</div>
-            </div>
-            <div class="lifetime-stat-divider"></div>
-            <div class="lifetime-stat">
-                <div class="lifetime-stat-value green" id="lifetimeStrong">0</div>
-                <div class="lifetime-stat-label">Strong Days</div>
-            </div>
-            <div class="lifetime-stat-divider"></div>
-            <div class="lifetime-stat">
-                <div class="lifetime-stat-value grey" id="lifetimeRelapses">0</div>
-                <div class="lifetime-stat-label">Relapses</div>
+    <!-- ═══ LIFETIME STATS (collapsible) ═════════════════ -->
+    <div class="card collapse-card">
+        <button type="button" class="collapse-header" id="lifetimePanelToggle" aria-expanded="false" aria-controls="lifetimePanelBody">
+            <span class="collapse-header-row">
+                <span class="collapse-title">Lifetime Stats</span>
+                <span class="collapse-chevron" id="lifetimePanelChevron" aria-hidden="true">›</span>
+            </span>
+        </button>
+        <div class="collapse-body" id="lifetimePanelBody">
+            <div class="lifetime-stats">
+                <div class="lifetime-stat">
+                    <div class="lifetime-stat-value" id="lifetimeJourneys">1</div>
+                    <div class="lifetime-stat-label">Journeys</div>
+                </div>
+                <div class="lifetime-stat-divider"></div>
+                <div class="lifetime-stat">
+                    <div class="lifetime-stat-value green" id="lifetimeStrong">0</div>
+                    <div class="lifetime-stat-label">Strong Days</div>
+                </div>
+                <div class="lifetime-stat-divider"></div>
+                <div class="lifetime-stat">
+                    <div class="lifetime-stat-value grey" id="lifetimeRelapses">0</div>
+                    <div class="lifetime-stat-label">Relapses</div>
+                </div>
             </div>
         </div>
     </div>

@@ -156,6 +156,10 @@ body {
     margin-top: 14px;
 }
 
+.collapse-body .lifetime-stats {
+    padding-top: 14px;
+}
+
 /* ── KNOWLEDGE CARD ── */
 .knowledge-card.card {
     padding: 16px 18px;
@@ -318,11 +322,17 @@ body {
 }
 .score-value.relapse-7 .score-failures { color: #ff453a; }
 
-/* 9–10 relapse: green → maroon */
+/* 9 relapse: green → maroon */
 .score-value.relapse-9 .score-sep {
     background-image: linear-gradient(90deg, var(--green), #7b2d26);
 }
 .score-value.relapse-9 .score-failures { color: #7b2d26; }
+
+/* 10th slip — journey over, neutral grey */
+.score-value.relapse-10 .score-sep {
+    background-image: linear-gradient(90deg, var(--green), var(--text-muted));
+}
+.score-value.relapse-10 .score-failures { color: var(--text-muted); }
 
 /* ── CHANCES (10 💪 emojis) ─────────────────────── */
 .chances-card {
@@ -513,6 +523,148 @@ button {
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+/* ── WEEKLY STREAK TRACK ─────────────────────────── */
+.weekly-streak-card {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.weekly-streak-track {
+    display: flex;
+    align-items: flex-start;
+    padding: 4px 0 8px;
+}
+
+.weekly-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 0;
+}
+
+.weekly-step-marker {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.weekly-step::before {
+    content: '';
+    position: absolute;
+    top: 7.5px;
+    right: 50%;
+    left: -50%;
+    height: 3px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.weekly-step:first-child::before {
+    display: none;
+}
+
+.weekly-step.done::before,
+.weekly-step.current::before {
+    background: linear-gradient(90deg, var(--green), var(--green-light));
+}
+
+.weekly-step-dot {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    background: var(--bg);
+    transition: all 0.25s ease;
+}
+
+.weekly-step.done .weekly-step-dot {
+    background: linear-gradient(180deg, var(--green-light), var(--green));
+    border-color: var(--green);
+}
+
+.weekly-step.current .weekly-step-dot {
+    box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.22);
+}
+
+.weekly-step-bullseye-svg {
+    display: block;
+    overflow: visible;
+    opacity: 0.55;
+    transition: opacity 0.25s ease;
+}
+
+.weekly-step-bullseye-svg .dart-shaft {
+    stroke: #8b6914;
+}
+
+.weekly-step-bullseye-svg .dart-feather-a {
+    fill: #ff453a;
+}
+
+.weekly-step-bullseye-svg .dart-feather-b {
+    fill: #fff;
+    stroke: #ff453a;
+    stroke-width: 0.35;
+    stroke-linejoin: round;
+}
+
+.weekly-step-bullseye-svg .dart-tip {
+    fill: #b0b0b5;
+}
+
+.weekly-step.target.done .weekly-step-bullseye-svg,
+.weekly-step.target.current .weekly-step-bullseye-svg {
+    opacity: 1;
+}
+
+.weekly-step.target.done .weekly-step-bullseye-svg .ring-outer,
+.weekly-step.target.current .weekly-step-bullseye-svg .ring-outer {
+    stroke: #ff3b30;
+    fill: rgba(255, 59, 48, 0.18);
+}
+
+.weekly-step.target.done .weekly-step-bullseye-svg .ring-mid,
+.weekly-step.target.current .weekly-step-bullseye-svg .ring-mid {
+    stroke: #ff3b30;
+}
+
+.weekly-step.target.done .weekly-step-bullseye-svg .ring-core,
+.weekly-step.target.current .weekly-step-bullseye-svg .ring-core {
+    fill: #ff3b30;
+}
+
+.weekly-step.target.current .weekly-step-marker {
+    box-shadow: 0 0 0 5px rgba(255, 59, 48, 0.22);
+    border-radius: 50%;
+}
+
+.weekly-step-label {
+    margin-top: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+}
+
+.weekly-step.done .weekly-step-label {
+    color: var(--green);
+}
+
+.weekly-step.current .weekly-step-label {
+    color: var(--text);
+    font-weight: 700;
+}
 
 /* ── MILESTONE CARDS ────────────────────────────── */
 .milestone-list {

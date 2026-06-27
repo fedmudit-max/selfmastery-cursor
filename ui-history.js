@@ -15,16 +15,25 @@ function toggleChartPanel() {
     syncHistoryPanels();
 }
 
+function toggleLifetimePanel() {
+    lifetimePanelOpen = !lifetimePanelOpen;
+    syncHistoryPanels();
+}
+
 function syncHistoryPanels() {
     const monthOpen = monthPanelOpen;
     const chartOpen = chartPanelOpen;
+    const lifetimeOpen = lifetimePanelOpen;
 
     document.getElementById('monthPanelBody')?.classList.toggle('is-open', monthOpen);
     document.getElementById('chartPanelBody')?.classList.toggle('is-open', chartOpen);
+    document.getElementById('lifetimePanelBody')?.classList.toggle('is-open', lifetimeOpen);
     document.getElementById('monthPanelChevron')?.classList.toggle('open', monthOpen);
     document.getElementById('chartPanelChevron')?.classList.toggle('open', chartOpen);
+    document.getElementById('lifetimePanelChevron')?.classList.toggle('open', lifetimeOpen);
     document.getElementById('monthPanelToggle')?.setAttribute('aria-expanded', monthOpen ? 'true' : 'false');
     document.getElementById('chartPanelToggle')?.setAttribute('aria-expanded', chartOpen ? 'true' : 'false');
+    document.getElementById('lifetimePanelToggle')?.setAttribute('aria-expanded', lifetimeOpen ? 'true' : 'false');
 
     if (chartOpen) renderChart();
 }
@@ -37,6 +46,10 @@ function syncHistoryPanels() {
     document.getElementById('chartPanelToggle')?.addEventListener('click', (e) => {
         e.preventDefault();
         toggleChartPanel();
+    });
+    document.getElementById('lifetimePanelToggle')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleLifetimePanel();
     });
 })();
 

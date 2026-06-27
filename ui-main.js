@@ -10,6 +10,7 @@ let chartMode = 'streaks';
 let monthOffset = 0;
 let monthPanelOpen = false;
 let chartPanelOpen = false;
+let lifetimePanelOpen = false;
 let toastTimer = null;
 let confettiParticles = [];
 let confettiAnimId    = null;
@@ -52,6 +53,7 @@ function renderAll() {
     renderChances();
     renderButtons();
     renderStreakMilestones();
+    renderWeeklyStreak();
     renderJourneyMilestones();
     renderBrainCard();
     renderKnowledgeCard();
@@ -67,7 +69,8 @@ function getRelapseScoreTier(failures) {
     if (failures <= 3) return 'relapse-2';
     if (failures <= 6) return 'relapse-4';
     if (failures <= 8) return 'relapse-7';
-    return 'relapse-9';
+    if (failures === 9) return 'relapse-9';
+    return 'relapse-10';
 }
 
 function renderTopStats() {
@@ -216,6 +219,39 @@ function renderCountMilestone(id, isActive, count) {
         setMilestoneState(item, null);
         statEl.textContent = count > 0 ? count : '0';
     }
+}
+
+function renderWeeklyStreak() {
+    const track = document.getElementById('weeklyStreakTrack');
+    if (!track) return;
+
+    const streak   = state.currentStreak;
+    const progress = getWeeklyStreakDay(streak);
+
+    let html = '';
+    for (let day = 1; day <= 7; day++) {
+        const done    = progress > 0 && day <= progress;
+        const current = done && day === progress;
+        const isTarget = day === 7;
+        const cls     = ['weekly-step', isTarget ? 'target' : '', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
+        const marker  = isTarget
+            ? `<div class="weekly-step-marker"><svg class="weekly-step-bullseye-svg" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+                <line class="dart-shaft" x1="3.3" y1="2.5" x2="8.55" y2="8.35" stroke="#9a7b4f" stroke-width="1.1" stroke-linecap="round"/>
+                <path class="dart-feather dart-feather-a" d="M3.3 2.5 L2.15 1.15 L3.45 3.15 Z"/>
+                <path class="dart-feather dart-feather-b" d="M3.3 2.5 L4.35 1.25 L3.85 3.35 Z"/>
+                <circle class="ring-outer" cx="9" cy="9" r="6.5" fill="rgba(255,69,58,0.12)" stroke="#ff453a" stroke-width="1.8"/>
+                <circle class="ring-mid" cx="9" cy="9" r="3.25" fill="#fff" stroke="#ff453a" stroke-width="1.15"/>
+                <circle class="ring-core" cx="9" cy="9" r="1.05" fill="#ff3b30"/>
+                <path class="dart-tip" d="M8.15 7.95 L9.45 9.3 L7.9 9.05 Z"/>
+            </svg></div>`
+            : '<div class="weekly-step-marker"><div class="weekly-step-dot" aria-hidden="true"></div></div>';
+        html += `
+            <div class="${cls}">
+                ${marker}
+                <div class="weekly-step-label">Day ${day}</div>
+            </div>`;
+    }
+    track.innerHTML = html;
 }
 
 function renderJourneyMilestones() {

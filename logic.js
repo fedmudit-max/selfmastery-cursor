@@ -180,17 +180,36 @@ function dailyLogKey(calDay) {
     return `day-${calDay}`;
 }
 
-function writeDailyLog(calDay, patch) {
-    state.dailyLog = state.dailyLog || {};
-    state.dailyLog[dailyLogKey(calDay)] = patch;
+/** Stable key for dailyLog — wall date so entries survive across journeys. */
+function dailyLogStorageKey(calDay, patch) {
+    return (patch && patch.date) ? patch.date : dailyLogKey(calDay);
 }
 
-function nextSlipCount(calDay) {
-    const prev = state.dailyLog?.[dailyLogKey(calDay)];
+function writeDailyLog(calDay, patch) {
+    state.dailyLog = state.dailyLog || {};
+    state.dailyLog[dailyLogStorageKey(calDay, patch)] = patch;
+}
+
+function nextSlipCount(logDate, calDay) {
+    const key = logDate || dailyLogKey(calDay);
+    const prev = state.dailyLog?.[key];
     if (prev && logStatus(prev) === 'slip') {
         return (prev.slipCount || 1) + 1;
     }
     return 1;
+}
+
+/** Re-key legacy day-N entries to YYYY-MM-DD when a date is stored on the entry. */
+function migrateDailyLogToDateKeys(log) {
+    const out = {};
+    for (const [key, entry] of Object.entries(log || {})) {
+        if (typeof entry === 'object' && entry.date) {
+            out[entry.date] = entry;
+        } else {
+            out[key] = entry;
+        }
+    }
+    return out;
 }
 
 // ════════════════════════════════════════════════════════
@@ -243,8 +262,8 @@ function migrateLongestStreakAtStart(merged, saved) {
 /** Backfill slipCount on today's log entry from todayFailCount (legacy saves). */
 function syncTodaySlipCountInLog(s) {
     if (s.todayStatus !== 'failed' || s.todayFailCount < 2) return;
-    const key = dailyLogKey(s.calendarDay);
-    const entry = s.dailyLog?.[key];
+    const dateKey = s.lastOpenedDate || todayKey();
+    const entry = s.dailyLog?.[dateKey] || s.dailyLog?.[dailyLogKey(s.calendarDay)];
     if (entry && logStatus(entry) === 'slip') {
         entry.slipCount = Math.max(entry.slipCount || 1, s.todayFailCount);
     }
@@ -264,7 +283,7 @@ function mergeSavedState(saved) {
     merged.completedJourneys = saved.completedJourneys || saved.attemptHistory || defaults.completedJourneys;
     merged.pastJourneyStreaks = saved.pastJourneyStreaks || saved.streakHistory || defaults.pastJourneyStreaks;
     merged.currentJourneyStreaks = saved.currentJourneyStreaks || saved.currentAttemptStreaks || defaults.currentJourneyStreaks;
-    merged.dailyLog = saved.dailyLog || defaults.dailyLog;
+    merged.dailyLog = migrateDailyLogToDateKeys(saved.dailyLog || defaults.dailyLog);
     merged.urgeLog = saved.urgeLog || defaults.urgeLog;
     merged.longestStreakAtStreakStart = migrateLongestStreakAtStart(merged, saved);
 
@@ -354,6 +373,18 @@ function isPersonalBestStreak(streak, recordToBeat) {
         && !STREAK_MILESTONES[streak];
 }
 
+/** Day 1–7 within the current weekly streak cycle (0 when no streak). Resets after every 7 days. */
+function getWeeklyStreakDay(streak) {
+    if (!streak || streak <= 0) return 0;
+    return ((streak - 1) % 7) + 1;
+}
+
+/** Which 7-day week of the current streak (1-based). */
+function getWeeklyStreakWeek(streak) {
+    if (!streak || streak <= 0) return 0;
+    return Math.floor((streak - 1) / 7) + 1;
+}
+
 function markTodayStatus(dateKey, status) {
     if (dateKey === todayKey()) {
         state.todayStatus = status;
@@ -432,7 +463,7 @@ function applySlipDay({ logDate, calDay }) {
         status: 'slip',
         day: calDay,
         date: logDate,
-        slipCount: nextSlipCount(calDay),
+        slipCount: nextSlipCount(logDate, calDay),
     });
 
     state.todayFailCount++;
@@ -548,7 +579,6 @@ function beginNextJourney() {
     state.calendarDay = 1;
     state.currentJourneyStreaks = [];
     state.recordCelebrated = false;
-    state.dailyLog = {};
     state.todayStatus = 'none';
     state.todayFailCount = 0;
     state.pendingNextJourney = false;
