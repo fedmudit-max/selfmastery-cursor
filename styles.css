@@ -336,8 +336,8 @@ body {
 
 /* ── CHANCES (10 💪 emojis) ─────────────────────── */
 .chances-card {
-    background: rgba(52,199,89,0.12);
-    border: 1.5px solid rgba(52,199,89,0.3);
+    background: rgba(52, 199, 89, 0.12);
+    border: 1.5px solid rgba(52, 199, 89, 0.3);
     border-radius: 14px;
     padding: 12px 14px;
     margin-bottom: 14px;
@@ -364,8 +364,15 @@ body {
     text-align: center;
     font-size: 15px;
     font-weight: 600;
-    color: var(--green);
+    transition: color 0.25s ease;
 }
+
+.chances-label.relapse-0 { color: var(--green); }
+.chances-label.relapse-2 { color: #e6ac00; }
+.chances-label.relapse-4 { color: #e07000; }
+.chances-label.relapse-7 { color: #ff453a; }
+.chances-label.relapse-9 { color: #7b2d26; }
+.chances-label.relapse-10 { color: var(--text-muted); }
 
 /* ── ACTION BUTTONS ─────────────────────────────── */
 .action-buttons {

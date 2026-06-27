@@ -108,8 +108,14 @@ function renderChances() {
     }
 
     const remaining = MAX_FAILURES - state.score.failures;
-    document.getElementById('chancesLabel').textContent =
-        `💪 ${remaining} ${remaining === 1 ? 'chance' : 'chances'} remaining`;
+    const tier = getRelapseScoreTier(state.score.failures);
+    const labelEl = document.getElementById('chancesLabel');
+
+    if (labelEl) {
+        labelEl.className = `chances-label ${tier}`;
+        labelEl.textContent =
+            `💪 ${remaining} ${remaining === 1 ? 'chance' : 'chances'} remaining`;
+    }
 }
 
 function renderButtons() {
@@ -232,7 +238,7 @@ function renderWeeklyStreak() {
     for (let day = 1; day <= 7; day++) {
         const done    = progress > 0 && day <= progress;
         const current = done && day === progress;
-        const isTarget = day === 7;
+        const isTarget = day === 7 && !done;
         const cls     = ['weekly-step', isTarget ? 'target' : '', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
         const marker  = isTarget
             ? `<div class="weekly-step-marker"><svg class="weekly-step-bullseye-svg" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
