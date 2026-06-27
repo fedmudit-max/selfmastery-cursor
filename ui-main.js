@@ -62,10 +62,29 @@ function renderAll() {
     syncHistoryPanels();
 }
 
+function getRelapseScoreTier(failures) {
+    if (failures <= 1) return 'relapse-0';
+    if (failures <= 3) return 'relapse-2';
+    if (failures <= 6) return 'relapse-4';
+    if (failures <= 8) return 'relapse-7';
+    return 'relapse-9';
+}
+
 function renderTopStats() {
-    document.getElementById('calendarDay').textContent    = state.calendarDay;
-    document.getElementById('currentJourney').textContent = `${state.score.success}/${state.score.failures}`;
-    document.getElementById('bestJourney').textContent    = formatJourneyScore(getDisplayBestJourney());
+    document.getElementById('calendarDay').textContent = state.calendarDay;
+
+    const { success, failures } = state.score;
+    const tier = getRelapseScoreTier(failures);
+    const currentEl = document.getElementById('currentJourney');
+    if (currentEl) {
+        currentEl.className = `score-value ${tier}`;
+        currentEl.innerHTML =
+            `<span class="score-strong">${success}</span>` +
+            `<span class="score-sep">/</span>` +
+            `<span class="score-failures">${failures}</span>`;
+    }
+
+    document.getElementById('bestJourney').textContent = formatJourneyScore(getDisplayBestJourney());
 }
 
 function renderBackupStatus() {
