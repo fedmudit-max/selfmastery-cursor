@@ -163,7 +163,9 @@ function dayOfYearFromKey(key) {
 }
 
 function todayKey() {
-    return dateKeyFromDate(new Date());
+    const offset = state?.devDateOffset || 0;
+    if (!offset) return dateKeyFromDate(new Date());
+    return addDaysToKey(dateKeyFromDate(new Date()), offset);
 }
 
 // ════════════════════════════════════════════════════════
@@ -244,6 +246,7 @@ function getDefaultState() {
         recordCelebrated: false,
         pendingNextJourney: false,
         journeyEndedDate: '',
+        devDateOffset: 0,
     };
 }
 
@@ -373,9 +376,38 @@ function isPersonalBestStreak(streak, recordToBeat) {
         && !STREAK_MILESTONES[streak];
 }
 
+/** Which Day 1–7 insight to show — the day you're working on, not the last one completed. */
+function getWeeklyInsightDay(progress) {
+    if (!progress || progress <= 0) return 1;
+    if (progress >= 7) return state.todayStatus === 'success' ? 7 : 1;
+    if (state.todayStatus === 'success') return progress;
+    return progress + 1;
+}
+
+/** Latest wall-date (YYYY-MM-DD) with a strong-day log entry. */
+function getLastStrongLogDate() {
+    const log = state.dailyLog || {};
+    let latest = '';
+    for (const entry of Object.values(log)) {
+        if (logStatus(entry) !== 'strong') continue;
+        const date = typeof entry === 'object' && entry.date ? entry.date : '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && date > latest) latest = date;
+    }
+    return latest;
+}
+
+/** After a full 7-day week, show a fresh timeline from the next calendar day onward. */
+function shouldRefreshWeeklyTimeline(streak) {
+    if (!streak || streak <= 0 || streak % 7 !== 0) return false;
+    const lastStrong = getLastStrongLogDate();
+    if (!lastStrong) return state.todayStatus !== 'success';
+    return lastStrong !== todayKey();
+}
+
 /** Day 1–7 within the current weekly streak cycle (0 when no streak). Resets after every 7 days. */
 function getWeeklyStreakDay(streak) {
     if (!streak || streak <= 0) return 0;
+    if (shouldRefreshWeeklyTimeline(streak)) return 0;
     return ((streak - 1) % 7) + 1;
 }
 
@@ -417,6 +449,8 @@ function getWeeklyGreenPct(streak) {
     let travelerPct;
     if (progress >= 7) {
         travelerPct = getWeeklyDotCenterPct(7);
+    } else if (state.todayStatus === 'success') {
+        travelerPct = getWeeklyDotCenterPct(progress);
     } else {
         const from = getWeeklyDotCenterPct(progress);
         const to   = getWeeklyDotCenterPct(progress + 1);
@@ -431,6 +465,9 @@ function getWeeklyGreenPct(streak) {
     }
 
     if (progress >= 7) return 100;
+    if (state.todayStatus === 'success') {
+        return (progress / 6) * 100;
+    }
     return ((progress - 1 + getIntraDaySegmentProgress()) / 6) * 100;
 }
 
@@ -440,6 +477,9 @@ function getWeeklyActiveTraveler(streak) {
     if (!progress) return null;
     if (progress >= 7) {
         return { leftPct: getWeeklyDotCenterPct(7) };
+    }
+    if (state.todayStatus === 'success') {
+        return { leftPct: getWeeklyDotCenterPct(progress) };
     }
     const from = getWeeklyDotCenterPct(progress);
     const to = getWeeklyDotCenterPct(progress + 1);

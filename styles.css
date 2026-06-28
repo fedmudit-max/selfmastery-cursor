@@ -564,12 +564,23 @@ button {
     overflow-x: clip;
 }
 
-.weekly-streak-heading {
-    font-size: 15px;
+.weekly-streak-insight {
+    margin-bottom: 14px;
+}
+
+.weekly-streak-day-title {
+    font-size: 13px;
     font-weight: 700;
     color: var(--text);
-    letter-spacing: -0.2px;
-    margin-bottom: 12px;
+    line-height: 1.35;
+    margin-bottom: 5px;
+}
+
+.weekly-streak-day-text {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    line-height: 1.55;
 }
 
 .weekly-streak-track {
@@ -816,6 +827,16 @@ button {
 .weekly-step-label-col.current .weekly-step-label {
     color: var(--green);
     font-weight: 700;
+}
+
+.weekly-streak-tagline {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(60, 60, 67, 0.08);
+    font-size: 10px;
+    color: rgba(60, 60, 67, 0.35);
+    line-height: 1.5;
+    font-style: italic;
 }
 
 /* ── MILESTONE CARDS ────────────────────────────── */

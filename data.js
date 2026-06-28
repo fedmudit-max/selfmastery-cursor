@@ -5,6 +5,17 @@ const LAST_BACKUP_KEY = 'kingLastBackupAt';
 const URGE_DURATION_SECS = 5 * 60;
 const TOTAL_SLIDES = 5;
 
+/** Daily insight shown on the weekly timeline card (Day 1–7 of each streak week). */
+const WEEKLY_DAY_INSIGHTS = {
+    1: { title: "Beginner's Mind",           body: "Every week begins the same way—with humility. Yesterday's success doesn't replace today's commitment." },
+    2: { title: 'One Day Matters',           body: 'Big changes are built from small, consistent actions. Keep showing up—one day at a time.' },
+    3: { title: 'Stay Grounded',             body: 'Confidence is earned. Overconfidence is borrowed. Stay grounded and keep making good choices.' },
+    4: { title: 'Progress, Not Perfection',  body: "You've come this far by staying consistent, not by being perfect. Continue the habit that got you here." },
+    5: { title: 'Awareness',                 body: 'Notice your thoughts, urges, and triggers without judging them. Awareness gives you the power to choose.' },
+    6: { title: 'Discipline Over Motivation', body: "Strength isn't measured by one great day. It's built through the quiet consistency of many ordinary days." },
+    7: { title: 'Finish Strong', body: 'One day left. Cross the line—then prove you can do it again next week.' },
+};
+
 const TOAST_MESSAGES = [
     '💪 Another day won. You\'re unstoppable.',
     '🔥 Streak alive! Keep the fire burning.',

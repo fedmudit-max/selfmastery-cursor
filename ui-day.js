@@ -282,6 +282,7 @@ function devAdvanceOneDay() {
 
     advanceCalendarDay();
 
+    state.devDateOffset = (state.devDateOffset || 0) + 1;
     state.lastOpenedDate  = todayKey();
     state.lastCheckedDate = todayKey();
     chartPage = -1;

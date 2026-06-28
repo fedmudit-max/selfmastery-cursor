@@ -314,12 +314,22 @@ function layoutWeeklyTrack(track) {
     }
 }
 
+function renderWeeklyStreakInsight(progress) {
+    const day     = getWeeklyInsightDay(progress);
+    const insight = WEEKLY_DAY_INSIGHTS[day] || WEEKLY_DAY_INSIGHTS[1];
+    const titleEl = document.getElementById('weeklyStreakDayTitle');
+    const textEl  = document.getElementById('weeklyStreakDayText');
+    if (titleEl) titleEl.textContent = `Day ${day} — ${insight.title}`;
+    if (textEl)  textEl.textContent  = insight.body;
+}
+
 function renderWeeklyStreak() {
     const track = document.getElementById('weeklyStreakTrack');
     if (!track) return;
 
     const streak   = state.currentStreak;
     const progress = getWeeklyStreakDay(streak);
+    renderWeeklyStreakInsight(progress);
     const traveler = getWeeklyActiveTraveler(streak);
 
     let railHtml   = '';
