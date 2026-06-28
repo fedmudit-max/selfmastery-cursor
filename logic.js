@@ -432,13 +432,13 @@ function getWeeklyDotCenterPct(day) {
     return ((2 * day - 1) / 14) * 100;
 }
 
-/** 0–1 progress along today's segment (8h→⅓, 16h→⅔, 24h→100%). */
+/** 0, ⅓, or ⅔ along today's segment — active dot rests at each third (8h stages). */
 function getIntraDaySegmentProgress() {
     const now = new Date();
     const hours = now.getHours() + now.getMinutes() / 60;
-    if (hours < 8) return (hours / 8) * (1 / 3);
-    if (hours < 16) return (1 / 3) + ((hours - 8) / 8) * (1 / 3);
-    return (2 / 3) + ((hours - 16) / 8) * (1 / 3);
+    if (hours < 8) return 0;
+    if (hours < 16) return 1 / 3;
+    return 2 / 3;
 }
 
 /** Green connector fill % along the stretched line to match traveler position. */

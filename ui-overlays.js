@@ -184,8 +184,8 @@ function stopConfetti() {
 
 // ════════════════════════════════════════════════════════
 //  FEATURE 1: URGE SURFING TIMER
-//  A 15-minute countdown with a breathing cycle animation.
-//  Urges typically peak and fade within 15 minutes.
+//  A 5-minute countdown with a breathing cycle animation.
+//  Urges typically peak and fade within 5 minutes.
 // ════════════════════════════════════════════════════════
 
 

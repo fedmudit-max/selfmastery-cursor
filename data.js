@@ -8,7 +8,7 @@ const TOTAL_SLIDES = 5;
 /** Daily insight shown on the weekly timeline card (Day 1–7 of each streak week). */
 const WEEKLY_DAY_INSIGHTS = {
     1: { title: "Beginner's Mind",           body: "Every week begins the same way—with humility. Yesterday's success doesn't replace today's commitment." },
-    2: { title: 'One Day Matters',           body: 'Big changes are built from small, consistent actions. Keep showing up—one day at a time.' },
+    2: { title: 'Show Up Again', body: 'Big changes are built from small, consistent actions. Keep showing up—one day at a time.' },
     3: { title: 'Stay Grounded',             body: 'Confidence is earned. Overconfidence is borrowed. Stay grounded and keep making good choices.' },
     4: { title: 'Progress, Not Perfection',  body: "You've come this far by staying consistent, not by being perfect. Continue the habit that got you here." },
     5: { title: 'Awareness',                 body: 'Notice your thoughts, urges, and triggers without judging them. Awareness gives you the power to choose.' },
