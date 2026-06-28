@@ -5,6 +5,7 @@ html {
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 :root {
@@ -15,7 +16,7 @@ html {
     --text-muted:  #86868b;
     --border:      #d2d2d7;
     --card:        #ffffff;
-    --bg:          #f5f5f7;
+    --bg:          #f2f2f7;
 }
 
 body {
@@ -25,10 +26,6 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     padding: 0;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
     touch-action: manipulation;
@@ -36,17 +33,20 @@ body {
 
 .container {
     width: 100%;
-    max-width: 520px;
+    max-width: 480px;
     margin: 0 auto;
-    padding: 6px 8px 12px;
+    padding: 16px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
 /* ── CARDS ──────────────────────────────────────── */
 .card {
     background: var(--card);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.07);
     animation: fadeUp 0.4s ease both;
 }
@@ -197,29 +197,33 @@ body {
     line-height: 1.55;
 }
 
+.primary-stack {
+    margin-bottom: 8px;
+}
+
 /* ── TOP ROW: Day + Best Journey ────────────────── */
 .top-row {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
+    grid-template-columns: 80px 1fr;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
 /* Small stat box (Day counter, Best Journey) */
 .stat-box {
-    padding: 12px 14px;
+    padding: 16px;
     border-radius: 14px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
+    gap: 4px;
 }
 
 .stat-box.green {
     background: rgba(52,199,89,0.12);
     border: 1.5px solid rgba(52,199,89,0.3);
-    min-width: 80px;
 }
 
 .stat-box.gold {
@@ -233,10 +237,10 @@ body {
 .stat-box.gold::before {
     content: '🏆';
     position: absolute;
-    right: 8px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 48px;
+    font-size: 36px;
     opacity: 0.15;
 }
 
@@ -245,7 +249,6 @@ body {
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    margin-bottom: 4px;
 }
 
 .stat-label.green { color: var(--green); }
@@ -255,39 +258,52 @@ body {
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -1px;
 }
 
-.stat-value.green { font-size: 22px; color: var(--green); }
-.stat-value.gold  { font-size: 26px; color: var(--gold); }
+.stat-value.green { font-size: 28px; color: var(--green); }
+.stat-value.gold  { font-size: 30px; color: var(--gold); }
 
 /* ── CURRENT JOURNEY SCORE ──────────────────────── */
 .score-card {
     background: rgba(52,199,89,0.18);
     border: 2px solid rgba(52,199,89,0.4);
-    border-radius: 12px;
-    padding: 10px 12px;
+    border-radius: 14px;
+    padding: 16px;
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
 
 .score-label {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     color: var(--green);
-    margin-bottom: 4px;
 }
 
 .score-value {
-    font-size: 38px;
+    font-size: 44px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    line-height: 1.1;
+    line-height: 1;
     display: flex;
     align-items: baseline;
     justify-content: center;
     gap: 0;
+    letter-spacing: -1px;
+}
+
+.score-breakdown {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: -0.1px;
 }
 
 .score-strong {
@@ -542,20 +558,33 @@ button {
 
 /* ── WEEKLY STREAK TRACK ─────────────────────────── */
 .weekly-streak-card {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding: 14px 16px 16px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    overflow-x: clip;
+}
+
+.weekly-streak-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+    margin-bottom: 12px;
 }
 
 .weekly-streak-track {
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 0 0 8px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .weekly-streak-rail {
     position: relative;
-    height: 32px;
+    height: 14px;
     --weekly-green: 0;
     --weekly-line-left: 0px;
     --weekly-line-width: 100%;
@@ -589,8 +618,9 @@ button {
 
 .weekly-streak-labels {
     position: relative;
-    margin-top: 0px;
-    min-height: 14px;
+    width: 100%;
+    margin-top: 6px;
+    min-height: 10px;
 }
 
 .weekly-step-label-col {
@@ -610,8 +640,8 @@ button {
 }
 
 .weekly-step-marker {
-    width: 14px;
-    height: 14px;
+    width: 8px;
+    height: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -626,58 +656,53 @@ button {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--card);
     transform: translate(-50%, -50%);
     z-index: 0;
 }
 
-.weekly-step.current .weekly-step-marker::after {
-    width: 10px;
-    height: 10px;
-    background: var(--green);
-}
-
+.weekly-step.current .weekly-step-marker::after,
 .weekly-step.done:not(.current) .weekly-step-marker::after {
-    width: 10px;
-    height: 10px;
     background: var(--green);
 }
 
 .weekly-step.target .weekly-step-marker {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
+    overflow: hidden;
 }
 
 .weekly-step.target .weekly-step-marker::after {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
 .weekly-step-dot {
     box-sizing: border-box;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     border: 2px solid var(--border);
     background: var(--card);
     position: relative;
     z-index: 2;
-    transition: width 0.2s ease, height 0.2s ease, border-width 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .weekly-step.done:not(.current) .weekly-step-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-width: 0;
     background: var(--green);
 }
 
 .weekly-step.current .weekly-step-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-width: 0;
     background: var(--green);
     animation: none;
@@ -687,8 +712,9 @@ button {
 .weekly-active-traveler {
     position: absolute;
     top: 50%;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
+    box-sizing: border-box;
     border-radius: 50%;
     border: 2px solid var(--green);
     background: linear-gradient(180deg, var(--green-light), var(--green));
@@ -720,7 +746,7 @@ button {
     display: block;
     width: 14px;
     height: 14px;
-    overflow: visible;
+    overflow: hidden;
     opacity: 0.55;
     position: relative;
     z-index: 2;
@@ -774,7 +800,7 @@ button {
 
 .weekly-step-label {
     margin-top: 0;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 600;
     color: var(--text-muted);
     text-align: inherit;
@@ -788,7 +814,7 @@ button {
 }
 
 .weekly-step-label-col.current .weekly-step-label {
-    color: var(--text);
+    color: var(--green);
     font-weight: 700;
 }
 
@@ -1854,19 +1880,8 @@ button {
     z-index: 999;
 }
 
-/* Wider screens — restore comfortable margins (phones stay edge-to-edge) */
+/* Wider screens — keep same gutter as phone (reference uses fixed 480px column) */
 @media (min-width: 600px) {
-    body {
-        padding: 16px;
-        padding-top: max(16px, env(safe-area-inset-top, 0px));
-        padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
-    }
-
-    .container {
-        max-width: 480px;
-        padding: 10px 14px 20px;
-    }
-
     .card {
         padding: 16px;
         margin-bottom: 12px;

@@ -87,6 +87,13 @@ function renderTopStats() {
             `<span class="score-failures">${failures}</span>`;
     }
 
+    const breakdownEl = document.getElementById('currentJourneyBreakdown');
+    if (breakdownEl) {
+        breakdownEl.textContent =
+            `${success} strong ${success === 1 ? 'day' : 'days'} · ` +
+            `${failures} ${failures === 1 ? 'slip' : 'slips'}`;
+    }
+
     document.getElementById('bestJourney').textContent = formatJourneyScore(getDisplayBestJourney());
 }
 
@@ -228,74 +235,73 @@ function renderCountMilestone(id, isActive, count) {
 }
 
 function syncWeeklyTrackWidth(track) {
-    const urgeBtn = document.querySelector('.btn-urge');
-    if (!urgeBtn) return;
-    const w = Math.round(urgeBtn.getBoundingClientRect().width);
-    if (w > 0) {
-        track.style.width = `${w}px`;
-        track.style.marginLeft = 'auto';
-        track.style.marginRight = 'auto';
-    }
+    track.style.width = '100%';
+    track.style.maxWidth = '100%';
+    track.style.marginLeft = '0';
+    track.style.marginRight = '0';
 }
 
-function getWeeklyDotRadius(step) {
-    return step.classList.contains('target') ? 7 : 5;
+/** Visual half-width of each dot marker (must match CSS). */
+function getWeeklyMarkerRadius(step) {
+    return step.classList.contains('target') ? 7 : 4;
 }
 
 function layoutWeeklyTrack(track) {
     const rail = track.querySelector('.weekly-streak-rail');
-    if (!rail) return;
+    const labelsRow = track.querySelector('.weekly-streak-labels');
+    if (!rail || !labelsRow) return;
 
     syncWeeklyTrackWidth(track);
 
     const steps = [...rail.querySelectorAll('.weekly-step')];
-    const labels = [...track.querySelectorAll('.weekly-step-label-col')];
-    if (steps.length !== 7) return;
+    const labels = [...labelsRow.querySelectorAll('.weekly-step-label-col')];
+    if (steps.length !== 7 || labels.length !== 7) return;
 
-    const trackRect = track.getBoundingClientRect();
-    const trackWidth = trackRect.width;
+    const trackWidth = track.getBoundingClientRect().width;
     if (trackWidth <= 0) return;
 
-    const rStart      = getWeeklyDotRadius(steps[0]);
-    const rEnd        = getWeeklyDotRadius(steps[6]);
-    const startCenter = rStart;
-    const endCenter   = trackWidth - rEnd;
-    const innerSpan   = endCenter - startCenter;
+    const rStart = getWeeklyMarkerRadius(steps[0]);
+    const rEnd   = getWeeklyMarkerRadius(steps[6]);
+    const firstCenter = rStart;
+    const lastCenter  = trackWidth - rEnd;
+    const innerSpan   = lastCenter - firstCenter;
+    if (innerSpan <= 0) return;
 
     steps.forEach((step, i) => {
-        const x = startCenter + (i / 6) * innerSpan;
-        step.style.left = `${x}px`;
+        const cx = firstCenter + (i / 6) * innerSpan;
+        step.style.left = `${cx}px`;
         step.style.top = '50%';
         step.style.transform = 'translate(-50%, -50%)';
     });
 
     labels.forEach((col, i) => {
+        const cx = firstCenter + (i / 6) * innerSpan;
+        const r  = getWeeklyMarkerRadius(steps[i]);
         if (i === 0) {
-            col.style.left = '0';
-            col.style.transform = 'translateX(0)';
+            col.style.left = `${cx - r}px`;
+            col.style.transform = 'none';
             col.style.textAlign = 'left';
         } else if (i === 6) {
-            col.style.left = `${trackWidth}px`;
+            col.style.left = `${cx + r}px`;
             col.style.transform = 'translateX(-100%)';
             col.style.textAlign = 'right';
         } else {
-            const x = startCenter + (i / 6) * innerSpan;
-            col.style.left = `${x}px`;
+            col.style.left = `${cx}px`;
             col.style.transform = 'translateX(-50%)';
             col.style.textAlign = 'center';
         }
     });
 
-    rail.style.setProperty('--weekly-line-left', `${startCenter}px`);
+    rail.style.setProperty('--weekly-line-left', `${firstCenter}px`);
     rail.style.setProperty('--weekly-line-width', `${innerSpan}px`);
 
     const dotCenters = steps.map((_, i) =>
-        ((startCenter + (i / 6) * innerSpan) / trackWidth) * 100);
+        ((firstCenter + (i / 6) * innerSpan) / trackWidth) * 100);
 
     setWeeklyTrackLayout({
         dotCenters,
-        lineLeftPct:  (startCenter / trackWidth) * 100,
-        lineRightPct: (endCenter / trackWidth) * 100,
+        lineLeftPct:  (firstCenter / trackWidth) * 100,
+        lineRightPct: (lastCenter / trackWidth) * 100,
     });
 
     const streak = state.currentStreak;
@@ -322,7 +328,8 @@ function renderWeeklyStreak() {
         const done    = progress > 0 && day <= progress;
         const current = done && day === progress;
         const isTarget = day === 7 && !done;
-        const cls     = ['weekly-step', isTarget ? 'target' : '', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
+        const stepCls  = ['weekly-step', isTarget ? 'target' : '', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
+        const labelCls = ['weekly-step-label-col', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
         const marker  = isTarget
             ? `<div class="weekly-step-marker"><svg class="weekly-step-bullseye-svg" viewBox="0 0 18 18" aria-hidden="true">
                 <line class="dart-shaft" x1="3.3" y1="2.5" x2="8.55" y2="8.35" stroke="#9a7b4f" stroke-width="1.1" stroke-linecap="round"/>
@@ -334,8 +341,8 @@ function renderWeeklyStreak() {
                 <path class="dart-tip" d="M8.15 7.95 L9.45 9.3 L7.9 9.05 Z"/>
             </svg></div>`
             : '<div class="weekly-step-marker"><div class="weekly-step-dot" aria-hidden="true"></div></div>';
-        railHtml += `<div class="${cls}">${marker}</div>`;
-        labelHtml += `<div class="weekly-step-label-col ${cls}"><div class="weekly-step-label">Day ${day}</div></div>`;
+        railHtml += `<div class="${stepCls}">${marker}</div>`;
+        labelHtml += `<div class="${labelCls}"><div class="weekly-step-label">Day ${day}</div></div>`;
     }
 
     const travelerHtml = traveler
@@ -348,7 +355,7 @@ function renderWeeklyStreak() {
             ${travelerHtml}
         </div>
         <div class="weekly-streak-labels">${labelHtml}</div>`;
-    layoutWeeklyTrack(track);
+    requestAnimationFrame(() => layoutWeeklyTrack(track));
 
     if (!track._weeklyResizeObs && typeof ResizeObserver !== 'undefined') {
         track._weeklyResizeObs = new ResizeObserver(() => layoutWeeklyTrack(track));

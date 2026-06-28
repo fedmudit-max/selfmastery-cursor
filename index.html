@@ -44,8 +44,8 @@
 
 <div class="container">
 
-    <!-- ═══ PRIMARY CARD ═══════════════════════════════════ -->
-    <div class="card">
+    <!-- ═══ PRIMARY STACK (score + actions, no outer card) ═ -->
+    <div class="primary-stack">
 
         <!-- Day counter + Best Journey -->
         <div class="top-row">
@@ -63,6 +63,7 @@
         <div class="score-card">
             <div class="score-label">Current Journey</div>
             <div class="score-value" id="currentJourney">0/0</div>
+            <div class="score-breakdown" id="currentJourneyBreakdown"></div>
         </div>
 
         <!-- 10 chances (💪 emojis) -->
@@ -81,6 +82,7 @@
 
     <!-- ═══ WEEKLY STREAK CARD ═════════════════════════════ -->
     <div class="card weekly-streak-card">
+        <div class="weekly-streak-heading">One Week at a Time</div>
         <div class="weekly-streak-track" id="weeklyStreakTrack"></div>
     </div>
 
