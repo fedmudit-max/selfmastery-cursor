@@ -385,6 +385,68 @@ function getWeeklyStreakWeek(streak) {
     return Math.floor((streak - 1) / 7) + 1;
 }
 
+/** Measured layout: label span + dot centers (% of track width). */
+let weeklyTrackLayout = null;
+
+function setWeeklyTrackLayout(layout) {
+    weeklyTrackLayout = layout;
+}
+
+/** Center of day N (1–7) on the weekly track, as % of track width. */
+function getWeeklyDotCenterPct(day) {
+    if (weeklyTrackLayout?.dotCenters) {
+        return weeklyTrackLayout.dotCenters[day - 1];
+    }
+    return ((2 * day - 1) / 14) * 100;
+}
+
+/** 0–1 progress along today's segment (8h→⅓, 16h→⅔, 24h→100%). */
+function getIntraDaySegmentProgress() {
+    const now = new Date();
+    const hours = now.getHours() + now.getMinutes() / 60;
+    if (hours < 8) return (hours / 8) * (1 / 3);
+    if (hours < 16) return (1 / 3) + ((hours - 8) / 8) * (1 / 3);
+    return (2 / 3) + ((hours - 16) / 8) * (1 / 3);
+}
+
+/** Green connector fill % along the stretched line to match traveler position. */
+function getWeeklyGreenPct(streak) {
+    const progress = getWeeklyStreakDay(streak);
+    if (progress <= 0) return 0;
+
+    let travelerPct;
+    if (progress >= 7) {
+        travelerPct = getWeeklyDotCenterPct(7);
+    } else {
+        const from = getWeeklyDotCenterPct(progress);
+        const to   = getWeeklyDotCenterPct(progress + 1);
+        travelerPct = from + (to - from) * getIntraDaySegmentProgress();
+    }
+
+    if (weeklyTrackLayout?.lineLeftPct != null) {
+        const lineWidth = weeklyTrackLayout.lineRightPct - weeklyTrackLayout.lineLeftPct;
+        if (lineWidth <= 0) return 0;
+        return Math.min(100, Math.max(0,
+            ((travelerPct - weeklyTrackLayout.lineLeftPct) / lineWidth) * 100));
+    }
+
+    if (progress >= 7) return 100;
+    return ((progress - 1 + getIntraDaySegmentProgress()) / 6) * 100;
+}
+
+/** Active dot position (% from left) sliding toward the next day dot through the day. */
+function getWeeklyActiveTraveler(streak) {
+    const progress = getWeeklyStreakDay(streak);
+    if (!progress) return null;
+    if (progress >= 7) {
+        return { leftPct: getWeeklyDotCenterPct(7) };
+    }
+    const from = getWeeklyDotCenterPct(progress);
+    const to = getWeeklyDotCenterPct(progress + 1);
+    const t = getIntraDaySegmentProgress();
+    return { leftPct: from + (to - from) * t };
+}
+
 function markTodayStatus(dateKey, status) {
     if (dateKey === todayKey()) {
         state.todayStatus = status;

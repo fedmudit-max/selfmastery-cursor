@@ -227,21 +227,104 @@ function renderCountMilestone(id, isActive, count) {
     }
 }
 
+function syncWeeklyTrackWidth(track) {
+    const urgeBtn = document.querySelector('.btn-urge');
+    if (!urgeBtn) return;
+    const w = Math.round(urgeBtn.getBoundingClientRect().width);
+    if (w > 0) {
+        track.style.width = `${w}px`;
+        track.style.marginLeft = 'auto';
+        track.style.marginRight = 'auto';
+    }
+}
+
+function getWeeklyDotRadius(step) {
+    return step.classList.contains('target') ? 7 : 5;
+}
+
+function layoutWeeklyTrack(track) {
+    const rail = track.querySelector('.weekly-streak-rail');
+    if (!rail) return;
+
+    syncWeeklyTrackWidth(track);
+
+    const steps = [...rail.querySelectorAll('.weekly-step')];
+    const labels = [...track.querySelectorAll('.weekly-step-label-col')];
+    if (steps.length !== 7) return;
+
+    const trackRect = track.getBoundingClientRect();
+    const trackWidth = trackRect.width;
+    if (trackWidth <= 0) return;
+
+    const rStart      = getWeeklyDotRadius(steps[0]);
+    const rEnd        = getWeeklyDotRadius(steps[6]);
+    const startCenter = rStart;
+    const endCenter   = trackWidth - rEnd;
+    const innerSpan   = endCenter - startCenter;
+
+    steps.forEach((step, i) => {
+        const x = startCenter + (i / 6) * innerSpan;
+        step.style.left = `${x}px`;
+        step.style.top = '50%';
+        step.style.transform = 'translate(-50%, -50%)';
+    });
+
+    labels.forEach((col, i) => {
+        if (i === 0) {
+            col.style.left = '0';
+            col.style.transform = 'translateX(0)';
+            col.style.textAlign = 'left';
+        } else if (i === 6) {
+            col.style.left = `${trackWidth}px`;
+            col.style.transform = 'translateX(-100%)';
+            col.style.textAlign = 'right';
+        } else {
+            const x = startCenter + (i / 6) * innerSpan;
+            col.style.left = `${x}px`;
+            col.style.transform = 'translateX(-50%)';
+            col.style.textAlign = 'center';
+        }
+    });
+
+    rail.style.setProperty('--weekly-line-left', `${startCenter}px`);
+    rail.style.setProperty('--weekly-line-width', `${innerSpan}px`);
+
+    const dotCenters = steps.map((_, i) =>
+        ((startCenter + (i / 6) * innerSpan) / trackWidth) * 100);
+
+    setWeeklyTrackLayout({
+        dotCenters,
+        lineLeftPct:  (startCenter / trackWidth) * 100,
+        lineRightPct: (endCenter / trackWidth) * 100,
+    });
+
+    const streak = state.currentStreak;
+    rail.style.setProperty('--weekly-green', String(getWeeklyGreenPct(streak)));
+
+    const traveler = rail.querySelector('.weekly-active-traveler');
+    if (traveler) {
+        const pos = getWeeklyActiveTraveler(streak);
+        if (pos) traveler.style.left = `${pos.leftPct}%`;
+    }
+}
+
 function renderWeeklyStreak() {
     const track = document.getElementById('weeklyStreakTrack');
     if (!track) return;
 
     const streak   = state.currentStreak;
     const progress = getWeeklyStreakDay(streak);
+    const traveler = getWeeklyActiveTraveler(streak);
 
-    let html = '';
+    let railHtml   = '';
+    let labelHtml  = '';
     for (let day = 1; day <= 7; day++) {
         const done    = progress > 0 && day <= progress;
         const current = done && day === progress;
         const isTarget = day === 7 && !done;
         const cls     = ['weekly-step', isTarget ? 'target' : '', done ? 'done' : '', current ? 'current' : ''].filter(Boolean).join(' ');
         const marker  = isTarget
-            ? `<div class="weekly-step-marker"><svg class="weekly-step-bullseye-svg" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+            ? `<div class="weekly-step-marker"><svg class="weekly-step-bullseye-svg" viewBox="0 0 18 18" aria-hidden="true">
                 <line class="dart-shaft" x1="3.3" y1="2.5" x2="8.55" y2="8.35" stroke="#9a7b4f" stroke-width="1.1" stroke-linecap="round"/>
                 <path class="dart-feather dart-feather-a" d="M3.3 2.5 L2.15 1.15 L3.45 3.15 Z"/>
                 <path class="dart-feather dart-feather-b" d="M3.3 2.5 L4.35 1.25 L3.85 3.35 Z"/>
@@ -251,13 +334,26 @@ function renderWeeklyStreak() {
                 <path class="dart-tip" d="M8.15 7.95 L9.45 9.3 L7.9 9.05 Z"/>
             </svg></div>`
             : '<div class="weekly-step-marker"><div class="weekly-step-dot" aria-hidden="true"></div></div>';
-        html += `
-            <div class="${cls}">
-                ${marker}
-                <div class="weekly-step-label">Day ${day}</div>
-            </div>`;
+        railHtml += `<div class="${cls}">${marker}</div>`;
+        labelHtml += `<div class="weekly-step-label-col ${cls}"><div class="weekly-step-label">Day ${day}</div></div>`;
     }
-    track.innerHTML = html;
+
+    const travelerHtml = traveler
+        ? '<div class="weekly-active-traveler" aria-hidden="true"></div>'
+        : '';
+
+    track.innerHTML = `
+        <div class="weekly-streak-rail">
+            ${railHtml}
+            ${travelerHtml}
+        </div>
+        <div class="weekly-streak-labels">${labelHtml}</div>`;
+    layoutWeeklyTrack(track);
+
+    if (!track._weeklyResizeObs && typeof ResizeObserver !== 'undefined') {
+        track._weeklyResizeObs = new ResizeObserver(() => layoutWeeklyTrack(track));
+        track._weeklyResizeObs.observe(track);
+    }
 }
 
 function renderJourneyMilestones() {

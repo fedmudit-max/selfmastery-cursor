@@ -66,7 +66,7 @@ function switchChartMode(mode) {
 // ════════════════════════════════════════════════════════
 
 const STREAKS_PER_PAGE = 10;
-const JOURNEYS_PER_PAGE = 4;
+const JOURNEYS_PER_PAGE = 5;
 
 function getChartWindow() {
     return chartMode === 'journeys' ? JOURNEYS_PER_PAGE : STREAKS_PER_PAGE;
@@ -189,12 +189,56 @@ function chartNav(dir) {
 // Math.clamp polyfill (not in all browsers yet)
 function clamp(val, min, max) { return Math.min(max, Math.max(min, val)); }
 
+const CHART_H       = 180;
+const CHART_PAD_T   = 24;
+const CHART_PAD_B   = 18;
+const CHART_Y_GUT   = 36;
+const CHART_PLOT_W  = 400;
+const CHART_VW      = CHART_Y_GUT + CHART_PLOT_W;
+const CHART_PAD_X   = CHART_PLOT_W * 0.04;
+
+function chartYForValue(value, yMax) {
+    const cH = CHART_H - CHART_PAD_T - CHART_PAD_B;
+    return CHART_PAD_T + cH - (value / yMax) * cH;
+}
+
+function chartYForFrac(frac) {
+    const cH = CHART_H - CHART_PAD_T - CHART_PAD_B;
+    return CHART_PAD_T + cH - frac * cH;
+}
+
+function chartPlotX(index, count) {
+    if (count === 1) return CHART_Y_GUT + CHART_PLOT_W / 2;
+    const plotLeft = CHART_Y_GUT + CHART_PAD_X;
+    const plotSpan = CHART_PLOT_W - CHART_PAD_X * 2;
+    return plotLeft + (index / (count - 1)) * plotSpan;
+}
+
+function buildChartYLabels(yFracs, yMax, muted) {
+    const fill = muted ? 'rgba(134,134,139,0.5)' : 'rgba(134,134,139,0.85)';
+    return yFracs.map(f => {
+        const y = chartYForFrac(f);
+        return `<text x="32" y="${y}" text-anchor="end" dominant-baseline="middle"
+            font-size="9" font-weight="500" fill="${fill}"
+            font-family="-apple-system,sans-serif">${Math.round(f * yMax)}</text>`;
+    }).join('');
+}
+
+function buildChartGridLines(yFracs, muted) {
+    const x1 = CHART_Y_GUT + CHART_PAD_X;
+    const x2 = CHART_Y_GUT + CHART_PLOT_W - CHART_PAD_X;
+    return yFracs.map(f => {
+        const y = chartYForFrac(f);
+        return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}"
+            stroke="rgba(0,0,0,${f === 0 ? (muted ? '0.10' : '0.10') : (muted ? '0.04' : '0.05')})"
+            stroke-width="${f === 0 ? 1.5 : 1}"/>`;
+    }).join('');
+}
+
 function renderChart() {
     const outer = document.getElementById('chartOuter');
-    const H = 180, padT = 24, padB = 36;
-    const cH = H - padT - padB;
-    const VW = 400;
-    const padX = VW * 0.04;
+    const cH = CHART_H - CHART_PAD_T - CHART_PAD_B;
+    const xLabelY = CHART_PAD_T + cH + 10;
     const yFracs = [0, 0.25, 0.5, 0.75, 1];
 
     const pagination = getChartPagination();
@@ -204,70 +248,34 @@ function renderChart() {
         outer.style.display = 'flex';
         updateChartNavButtons(false, false, false);
 
-        // Empty graph — show axes with default scale of 30
         const yMax = 30;
-        const yAxisSvg = document.getElementById('chartYAxis');
-        yAxisSvg.setAttribute('width', 36);
-        yAxisSvg.setAttribute('height', H);
-        yAxisSvg.innerHTML = yFracs.map(f => {
-            const y = padT + cH - f * cH;
-            return `<text x="32" y="${y + 4}" text-anchor="end" font-size="9" font-weight="500"
-                fill="rgba(134,134,139,0.5)" font-family="-apple-system,sans-serif">${Math.round(f * yMax)}</text>`;
-        }).join('');
-
-        const gridLines = yFracs.map(f => {
-            const y = padT + cH - f * cH;
-            return `<line x1="${padX}" y1="${y}" x2="${VW - padX}" y2="${y}"
-                stroke="rgba(0,0,0,${f === 0 ? '0.10' : '0.04'})"
-                stroke-width="${f === 0 ? 1.5 : 1}"/>`;
-        }).join('');
-
-        document.getElementById('chartInner').setAttribute('viewBox', `0 0 ${VW} ${H}`);
+        document.getElementById('chartInner').setAttribute('viewBox', `0 0 ${CHART_VW} ${CHART_H}`);
         document.getElementById('chartInner').innerHTML = `
-            ${gridLines}
-            <line x1="0" y1="${padT}" x2="0" y2="${padT + cH}"
+            ${buildChartYLabels(yFracs, yMax, true)}
+            ${buildChartGridLines(yFracs, true)}
+            <line x1="${CHART_Y_GUT}" y1="${CHART_PAD_T}" x2="${CHART_Y_GUT}" y2="${CHART_PAD_T + cH}"
                 stroke="rgba(0,0,0,0.10)" stroke-width="1.5"/>
-            <text x="${VW/2}" y="${padT + cH/2}" text-anchor="middle"
-                font-size="13" fill="rgba(134,134,139,0.6)"
+            <text x="${CHART_Y_GUT + CHART_PLOT_W / 2}" y="${CHART_PAD_T + cH / 2}" text-anchor="middle"
+                dominant-baseline="middle" font-size="13" fill="rgba(134,134,139,0.6)"
                 font-family="-apple-system,sans-serif">Your history starts today</text>`;
         return;
     }
 
     outer.style.display = 'flex';
 
-    // ── Layout ───────────────────────────────────────
-    // Y scale — fixed to all-time best with 25% headroom
     const allTimeMax = Math.max(...points.map(p => p.val), 1);
     const yMax       = Math.max(Math.ceil(allTimeMax * 1.25 / 5) * 5, 5);
     const bestVal = chartMode === 'journeys' ? state.bestJourney.success : state.longestStreak;
 
-    // ── Y axis: 5 evenly spaced labels ───────────────
-    const yAxisSvg = document.getElementById('chartYAxis');
-    yAxisSvg.setAttribute('width', 36);
-    yAxisSvg.setAttribute('height', H);
-    yAxisSvg.innerHTML = yFracs.map(f => {
-        const y = padT + cH - f * cH;
-        return `<text x="32" y="${y + 4}" text-anchor="end" font-size="9" font-weight="500"
-            fill="rgba(134,134,139,0.85)" font-family="-apple-system,sans-serif">${Math.round(f * yMax)}</text>`;
-    }).join('');
+    const gridLines = buildChartGridLines(yFracs, false) +
+        `<line x1="${CHART_Y_GUT}" y1="${CHART_PAD_T}" x2="${CHART_Y_GUT}" y2="${CHART_PAD_T + cH}"
+            stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>`;
 
-    // ── Grid lines + Y axis line ──────────────────────
-    const gridLines = yFracs.map(f => {
-        const y = padT + cH - f * cH;
-        return `<line x1="${padX}" y1="${y}" x2="${VW - padX}" y2="${y}"
-            stroke="rgba(0,0,0,${f === 0 ? '0.10' : '0.05'})"
-            stroke-width="${f === 0 ? 1.5 : 1}"/>`;
-    }).join('') +
-    // Vertical Y axis line — sits at left edge, before the first data point
-    `<line x1="0" y1="${padT}" x2="0" y2="${padT + cH}"
-        stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>`;
-
-    // ── Coordinates ──────────────────────────────────
     const isCurrentBest = state.currentStreak > 0 && state.currentStreak === state.longestStreak;
 
     const pts = show.map((p, i) => ({
-        x:          show.length === 1 ? VW / 2 : padX + (i / (show.length - 1)) * (VW - padX * 2),
-        y:          padT + cH - (p.val / yMax) * cH,
+        x:          chartPlotX(i, show.length),
+        y:          chartYForValue(p.val, yMax),
         val:        p.val,
         label:      p.label,
         isBest:     !p.live && p.val === bestVal && bestVal > 0,
@@ -275,19 +283,32 @@ function renderChart() {
         isLiveBest: !!p.live && isCurrentBest,
     }));
 
-    // ── Area fill ─────────────────────────────────────
     const polyPoints = pts.length > 1
-        ? `${pts.map(p => `${p.x},${p.y}`).join(' ')} ${pts.at(-1).x},${padT + cH} ${pts[0].x},${padT + cH}`
+        ? `${pts.map(p => `${p.x},${p.y}`).join(' ')} ${pts.at(-1).x},${CHART_PAD_T + cH} ${pts[0].x},${CHART_PAD_T + cH}`
         : '';
 
-    // ── Line path ─────────────────────────────────────
     const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
 
-    // ── Dots + labels ─────────────────────────────────
     const nodes = pts.map(p => {
-        const color = p.isLiveBest ? '#ff9f0a' : p.isLive ? 'rgba(52,199,89,0.5)' : p.isBest ? '#ff9f0a' : '#34c759';
+        const color = p.isLiveBest ? '#ff9f0a' : p.isLive ? '#34c759' : p.isBest ? '#ff9f0a' : '#34c759';
         const r     = p.isBest || p.isLiveBest ? 6 : 5;
-        const halo  = p.isBest
+
+        if (p.isLive) {
+            const glowClass = p.isLiveBest ? 'chart-dot-live-glow--orange' : 'chart-dot-live-glow--green';
+            return `
+            <g class="chart-dot-live" transform="translate(${p.x}, ${p.y})">
+                <circle class="chart-dot-live-glow ${glowClass}" cx="0" cy="0" r="${r + 4}"/>
+                <circle cx="0" cy="0" r="${r}" fill="white" stroke="${color}" stroke-width="2.5"/>
+            </g>
+            <text x="${p.x}" y="${p.y - 11}" text-anchor="middle"
+                font-size="11" font-weight="700" fill="${color}"
+                font-family="-apple-system,sans-serif">${p.val}</text>
+            <text x="${p.x}" y="${xLabelY}" text-anchor="middle"
+                font-size="10" fill="rgba(134,134,139,0.9)"
+                font-family="-apple-system,sans-serif">${p.label}</text>`;
+        }
+
+        const halo = p.isBest
             ? `<circle cx="${p.x}" cy="${p.y}" r="${r + 5}" fill="rgba(255,159,10,0.12)"/>`
             : `<circle cx="${p.x}" cy="${p.y}" r="${r + 5}" fill="rgba(52,199,89,0.08)"/>`;
         return `
@@ -297,7 +318,7 @@ function renderChart() {
             <text x="${p.x}" y="${p.y - 11}" text-anchor="middle"
                 font-size="11" font-weight="700" fill="${color}"
                 font-family="-apple-system,sans-serif">${p.val}</text>
-            <text x="${p.x}" y="${padT + cH + 16}" text-anchor="middle"
+            <text x="${p.x}" y="${xLabelY}" text-anchor="middle"
                 font-size="10" fill="rgba(134,134,139,0.9)"
                 font-family="-apple-system,sans-serif">${p.label}</text>`;
     }).join('');
@@ -306,8 +327,7 @@ function renderChart() {
     const canGoRight = chartPage < maxPage;
     updateChartNavButtons(canGoLeft, canGoRight, hasNav);
 
-    // ── Render ────────────────────────────────────────
-    document.getElementById('chartInner').setAttribute('viewBox', `0 0 ${VW} ${H}`);
+    document.getElementById('chartInner').setAttribute('viewBox', `0 0 ${CHART_VW} ${CHART_H}`);
     document.getElementById('chartInner').innerHTML = `
         <defs>
             <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -315,6 +335,7 @@ function renderChart() {
                 <stop offset="100%" stop-color="#34c759" stop-opacity="0"/>
             </linearGradient>
         </defs>
+        ${buildChartYLabels(yFracs, yMax, false)}
         ${gridLines}
         ${pts.length > 1 ? `<polygon points="${polyPoints}" fill="url(#areaGrad)"/>` : ''}
         ${pts.length > 1 ? `<path d="${linePath}" fill="none" stroke="#34c759"

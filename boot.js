@@ -111,8 +111,18 @@ if (safeGet('onboardingComplete')) {
 
 // Re-check day when user returns to app from background
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') checkNewDay();
+    if (document.visibilityState === 'visible') {
+        checkNewDay();
+        renderWeeklyStreak();
+    }
 });
+
+// Move weekly timeline traveler as the day progresses (6h / 12h / 18h / 24h stages)
+setInterval(() => {
+    if (document.visibilityState === 'visible' && safeGet('onboardingComplete')) {
+        renderWeeklyStreak();
+    }
+}, 5 * 60 * 1000);
 
 // iOS Safari PWA — fires when restored from cache (bfcache)
 window.addEventListener('pageshow', (e) => {

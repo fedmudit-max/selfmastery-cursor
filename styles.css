@@ -24,21 +24,30 @@ body {
     color: var(--text);
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 20px;
+    padding: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
     touch-action: manipulation;
 }
 
-.container { max-width: 480px; margin: 0 auto; padding: 12px 14px 24px; }
+.container {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 6px 8px 12px;
+}
 
 /* ── CARDS ──────────────────────────────────────── */
 .card {
     background: var(--card);
-    border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
     animation: fadeUp 0.4s ease both;
 }
 
@@ -93,7 +102,7 @@ body {
 .collapse-header {
     display: block;
     width: 100%;
-    padding: 16px;
+    padding: 12px 14px;
     border: none;
     background: transparent;
     text-align: left;
@@ -144,7 +153,7 @@ body {
 
 .collapse-body {
     display: none;
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;
     border-top: 1px solid var(--border);
 }
 
@@ -192,13 +201,13 @@ body {
 .top-row {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 /* Small stat box (Day counter, Best Journey) */
 .stat-box {
-    padding: 16px 20px;
+    padding: 12px 14px;
     border-radius: 14px;
     display: flex;
     flex-direction: column;
@@ -255,10 +264,10 @@ body {
 .score-card {
     background: rgba(52,199,89,0.18);
     border: 2px solid rgba(52,199,89,0.4);
-    border-radius: 14px;
-    padding: 14px;
+    border-radius: 12px;
+    padding: 10px 12px;
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .score-label {
@@ -338,16 +347,16 @@ body {
 .chances-card {
     background: rgba(52, 199, 89, 0.12);
     border: 1.5px solid rgba(52, 199, 89, 0.3);
-    border-radius: 14px;
-    padding: 12px 14px;
-    margin-bottom: 14px;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
 }
 
 .chances-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 4px;
+    margin-bottom: 8px;
 }
 
 .chance {
@@ -378,11 +387,11 @@ body {
 .action-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
 }
 
 button {
-    padding: 12px 16px;
+    padding: 11px 12px;
     border: none;
     border-radius: 12px;
     font-size: 15px;
@@ -502,15 +511,15 @@ button {
 .tabs {
     display: flex;
     gap: 3px;
-    padding: 4px;
+    padding: 3px;
     background: rgba(0,0,0,0.06);
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .tab {
     flex: 1;
-    padding: 11px 12px;
+    padding: 10px 8px;
     background: transparent;
     border: none;
     border-radius: 9px;
@@ -533,28 +542,76 @@ button {
 
 /* ── WEEKLY STREAK TRACK ─────────────────────────── */
 .weekly-streak-card {
-    padding-top: 14px;
-    padding-bottom: 14px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .weekly-streak-track {
     display: flex;
-    align-items: flex-start;
-    padding: 4px 0 8px;
+    flex-direction: column;
+    position: relative;
+    padding: 0 0 8px;
 }
 
-.weekly-step {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.weekly-streak-rail {
     position: relative;
+    height: 32px;
+    --weekly-green: 0;
+    --weekly-line-left: 0px;
+    --weekly-line-width: 100%;
+}
+
+.weekly-streak-rail::before {
+    content: '';
+    position: absolute;
+    left: var(--weekly-line-left, 0);
+    width: var(--weekly-line-width, 100%);
+    top: 50%;
+    height: 2px;
+    transform: translateY(-50%);
+    background: var(--border);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.weekly-streak-rail::after {
+    content: '';
+    position: absolute;
+    left: var(--weekly-line-left, 0);
+    top: 50%;
+    height: 2px;
+    width: calc(var(--weekly-line-width, 100%) * var(--weekly-green) / 100);
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, var(--green), var(--green-light));
+    z-index: 0;
+    pointer-events: none;
+}
+
+.weekly-streak-labels {
+    position: relative;
+    margin-top: 0px;
+    min-height: 14px;
+}
+
+.weekly-step-label-col {
+    position: absolute;
+    top: 0;
     min-width: 0;
+    text-align: center;
+}
+
+.weekly-streak-rail .weekly-step {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+    z-index: 1;
 }
 
 .weekly-step-marker {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -563,50 +620,111 @@ button {
     flex-shrink: 0;
 }
 
-.weekly-step::before {
+/* Opaque pad hides the line under each dot */
+.weekly-step-marker::after {
     content: '';
     position: absolute;
-    top: 7.5px;
-    right: 50%;
-    left: -50%;
-    height: 3px;
-    background: var(--border);
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--card);
+    transform: translate(-50%, -50%);
     z-index: 0;
 }
 
-.weekly-step:first-child::before {
-    display: none;
+.weekly-step.current .weekly-step-marker::after {
+    width: 10px;
+    height: 10px;
+    background: var(--green);
 }
 
-.weekly-step.done::before,
-.weekly-step.current::before {
-    background: linear-gradient(90deg, var(--green), var(--green-light));
+.weekly-step.done:not(.current) .weekly-step-marker::after {
+    width: 10px;
+    height: 10px;
+    background: var(--green);
+}
+
+.weekly-step.target .weekly-step-marker {
+    width: 16px;
+    height: 16px;
+}
+
+.weekly-step.target .weekly-step-marker::after {
+    width: 16px;
+    height: 16px;
 }
 
 .weekly-step-dot {
     box-sizing: border-box;
-    width: 18px;
-    height: 18px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    border: 2.5px solid var(--border);
-    background: var(--bg);
-    transition: all 0.25s ease;
+    border: 2px solid var(--border);
+    background: var(--card);
+    position: relative;
+    z-index: 2;
+    transition: width 0.2s ease, height 0.2s ease, border-width 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-.weekly-step.done .weekly-step-dot {
-    background: linear-gradient(180deg, var(--green-light), var(--green));
-    border-color: var(--green);
+.weekly-step.done:not(.current) .weekly-step-dot {
+    width: 10px;
+    height: 10px;
+    border-width: 0;
+    background: var(--green);
 }
 
 .weekly-step.current .weekly-step-dot {
-    box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.22);
+    width: 10px;
+    height: 10px;
+    border-width: 0;
+    background: var(--green);
+    animation: none;
+    box-shadow: none;
+}
+
+.weekly-active-traveler {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    background: linear-gradient(180deg, var(--green-light), var(--green));
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    pointer-events: none;
+    animation: weekly-dot-glow 2.2s ease-in-out infinite;
+    transition: left 0.5s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .weekly-active-traveler {
+        animation: none;
+        box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.2);
+        transition: none;
+    }
+}
+
+@keyframes weekly-dot-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.14);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(52, 199, 89, 0.28);
+    }
 }
 
 .weekly-step-bullseye-svg {
     display: block;
+    width: 14px;
+    height: 14px;
     overflow: visible;
     opacity: 0.55;
-    transition: opacity 0.25s ease;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.2s ease;
 }
 
 .weekly-step-bullseye-svg .dart-shaft {
@@ -655,20 +773,21 @@ button {
 }
 
 .weekly-step-label {
-    margin-top: 10px;
+    margin-top: 0;
     font-size: 10px;
     font-weight: 600;
     color: var(--text-muted);
-    text-align: center;
+    text-align: inherit;
     line-height: 1.2;
     letter-spacing: -0.2px;
+    white-space: nowrap;
 }
 
-.weekly-step.done .weekly-step-label {
+.weekly-step-label-col.done .weekly-step-label {
     color: var(--green);
 }
 
-.weekly-step.current .weekly-step-label {
+.weekly-step-label-col.current .weekly-step-label {
     color: var(--text);
     font-weight: 700;
 }
@@ -790,15 +909,79 @@ button {
     align-items: stretch;
 }
 
+.chart-plot-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.chart-frame {
+    display: flex;
+    flex-direction: column;
+}
+
 .chart-nav-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
-.chart-yaxis { flex-shrink: 0; width: 36px; height: 180px; }
-.chart-inner { display: block; width: 100%; height: 180px; }
+.chart-nav-y {
+    flex-shrink: 0;
+    width: 36px;
+    display: flex;
+    justify-content: center;
+}
+
+.chart-nav-plot {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 2px;
+}
+
+.chart-yaxis { display: none; }
+
+.chart-inner {
+    display: block;
+    width: 100%;
+    height: 180px;
+    overflow: visible;
+}
+
+@keyframes chart-dot-live-glow {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.32;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.14;
+    }
+}
+
+.chart-dot-live-glow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: chart-dot-live-glow 2.2s ease-in-out infinite;
+}
+
+.chart-dot-live-glow--green {
+    fill: rgba(52, 199, 89, 0.24);
+}
+
+.chart-dot-live-glow--orange {
+    fill: rgba(255, 159, 10, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chart-dot-live-glow {
+        animation: none;
+        opacity: 0.22;
+        transform: scale(1.15);
+    }
+}
 
 /* ── SCIENCE TAB ── */
 .science-list {
@@ -1177,7 +1360,7 @@ button {
     padding: 3px;
     background: rgba(0,0,0,0.06);
     border-radius: 9px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     width: fit-content;
 }
 
@@ -1669,4 +1852,32 @@ button {
     inset: 0;
     pointer-events: none;
     z-index: 999;
+}
+
+/* Wider screens — restore comfortable margins (phones stay edge-to-edge) */
+@media (min-width: 600px) {
+    body {
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top, 0px));
+        padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    }
+
+    .container {
+        max-width: 480px;
+        padding: 10px 14px 20px;
+    }
+
+    .card {
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: 18px;
+    }
+
+    .collapse-header {
+        padding: 14px 16px;
+    }
+
+    .collapse-body {
+        padding: 0 16px 16px;
+    }
 }
