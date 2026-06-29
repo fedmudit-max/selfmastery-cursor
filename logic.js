@@ -376,8 +376,14 @@ function isPersonalBestStreak(streak, recordToBeat) {
         && !STREAK_MILESTONES[streak];
 }
 
+/** True on the calendar day the user slipped — show reflect copy, not Day 1 yet. */
+function isWeeklySlipReflectDay() {
+    return state.todayStatus === 'failed';
+}
+
 /** Which Day 1–7 insight to show — the day you're working on, not the last one completed. */
 function getWeeklyInsightDay(progress) {
+    if (isWeeklySlipReflectDay()) return null;
     if (!progress || progress <= 0) return 1;
     if (progress >= 7) return state.todayStatus === 'success' ? 7 : 1;
     if (state.todayStatus === 'success') return progress;

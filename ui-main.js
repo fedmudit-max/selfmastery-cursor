@@ -315,10 +315,17 @@ function layoutWeeklyTrack(track) {
 }
 
 function renderWeeklyStreakInsight(progress) {
-    const day     = getWeeklyInsightDay(progress);
-    const insight = WEEKLY_DAY_INSIGHTS[day] || WEEKLY_DAY_INSIGHTS[1];
     const titleEl = document.getElementById('weeklyStreakDayTitle');
     const textEl  = document.getElementById('weeklyStreakDayText');
+
+    if (isWeeklySlipReflectDay()) {
+        if (titleEl) titleEl.textContent = WEEKLY_SLIP_REFLECT.title;
+        if (textEl)  textEl.textContent  = WEEKLY_SLIP_REFLECT.body;
+        return;
+    }
+
+    const day     = getWeeklyInsightDay(progress);
+    const insight = WEEKLY_DAY_INSIGHTS[day] || WEEKLY_DAY_INSIGHTS[1];
     if (titleEl) titleEl.textContent = `Day ${day} — ${insight.title}`;
     if (textEl)  textEl.textContent  = insight.body;
 }
