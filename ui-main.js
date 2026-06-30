@@ -132,7 +132,7 @@ function renderButtons() {
     if (isAwaitingNextJourney()) {
         successBtn.disabled = true;
         successBtn.classList.remove('logged');
-        successBtn.textContent = '✓ I STAYED STRONG';
+        successBtn.textContent = '✓ I STAYED STRONG TODAY';
         failBtn.disabled = true;
         failBtn.textContent = 'New journey starts tomorrow';
         return;
@@ -160,7 +160,7 @@ function renderButtons() {
     } else {
         successBtn.disabled = false;
         successBtn.classList.remove('logged');
-        successBtn.textContent = '✓ I STAYED STRONG';
+        successBtn.textContent = '✓ I STAYED STRONG TODAY';
         failBtn.disabled    = false;
         failBtn.textContent = '✕ I Slipped';
     }
@@ -243,7 +243,9 @@ function syncWeeklyTrackWidth(track) {
 
 /** Visual half-width of each dot marker (must match CSS). */
 function getWeeklyMarkerRadius(step) {
-    return step.classList.contains('target') ? 7 : 4;
+    if (step.classList.contains('target')) return 7;
+    if (step.classList.contains('done')) return 6;
+    return 4;
 }
 
 function layoutWeeklyTrack(track) {

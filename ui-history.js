@@ -93,7 +93,7 @@ function getJourneyStreakEntries() {
 
     const currentStreaks = [...(state.currentJourneyStreaks || [])];
     const hasLiveStreak = state.currentStreak > 0;
-    if (currentStreaks.length > 0 || hasLiveStreak) {
+    if (!isAwaitingNextJourney() && (currentStreaks.length > 0 || hasLiveStreak)) {
         entries.push({
             attempt: state.attempt,
             streaks: currentStreaks,
@@ -148,7 +148,9 @@ function getJourneyChartPoints() {
         val: j.score.success,
         label: `J${j.attempt}`,
     }));
-    if (state.score.success > 0) {
+    // Journey is archived on end but score resets only on the next calendar day —
+    // skip the live point while awaiting, or J1 and J1… appear together.
+    if (!isAwaitingNextJourney() && state.score.success > 0) {
         points.push({ val: state.score.success, label: `J${state.attempt}…`, live: true });
     }
     return points;
@@ -207,11 +209,11 @@ function chartYForFrac(frac) {
     return CHART_PAD_T + cH - frac * cH;
 }
 
-function chartPlotX(index, count) {
-    if (count === 1) return CHART_Y_GUT + CHART_PLOT_W / 2;
+function chartPlotX(index, slotCount) {
     const plotLeft = CHART_Y_GUT + CHART_PAD_X;
     const plotSpan = CHART_PLOT_W - CHART_PAD_X * 2;
-    return plotLeft + (index / (count - 1)) * plotSpan;
+    if (slotCount <= 1) return plotLeft;
+    return plotLeft + (index / (slotCount - 1)) * plotSpan;
 }
 
 function buildChartYLabels(yFracs, yMax, muted) {
@@ -272,9 +274,10 @@ function renderChart() {
             stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>`;
 
     const isCurrentBest = state.currentStreak > 0 && state.currentStreak === state.longestStreak;
+    const slotCount = getChartWindow();
 
     const pts = show.map((p, i) => ({
-        x:          chartPlotX(i, show.length),
+        x:          chartPlotX(i, slotCount),
         y:          chartYForValue(p.val, yMax),
         val:        p.val,
         label:      p.label,

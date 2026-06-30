@@ -716,15 +716,15 @@ button {
 }
 
 .weekly-step.done:not(.current) .weekly-step-dot {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-width: 0;
     background: var(--green);
 }
 
 .weekly-step.current .weekly-step-dot {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-width: 0;
     background: var(--green);
     animation: none;
@@ -734,8 +734,8 @@ button {
 .weekly-active-traveler {
     position: absolute;
     top: 50%;
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     box-sizing: border-box;
     border-radius: 50%;
     border: 2px solid var(--green);
