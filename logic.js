@@ -352,6 +352,36 @@ function updateBestJourney() {
     }
 }
 
+/** Peak strong-day count across the current and all completed journeys. */
+function maxJourneyStrongDaysEver() {
+    let max = state.score?.success || 0;
+    for (const j of state.completedJourneys || []) {
+        max = Math.max(max, j.score?.success || 0);
+    }
+    return max;
+}
+
+/** Milestone row stays visible once its unlock threshold was ever reached. */
+function isJourneyMilestoneRevealed(unlockAt) {
+    const current = state.score?.success || 0;
+    return current >= unlockAt || maxJourneyStrongDaysEver() >= unlockAt;
+}
+
+function journeyMilestoneAchievedCount(day) {
+    return state.journeyMilestones[day] || 0;
+}
+
+function shouldJourneyMilestoneGlow(day, currentSuccess) {
+    return journeyMilestoneAchievedCount(day) > 0 || currentSuccess >= day;
+}
+
+function formatJourneyMilestoneStatus(day, currentSuccess) {
+    const count = journeyMilestoneAchievedCount(day);
+    if (count > 0) return String(count);
+    if (currentSuccess >= day) return '✓';
+    return '0';
+}
+
 function isAwaitingNextJourney() {
     return !!state.pendingNextJourney;
 }

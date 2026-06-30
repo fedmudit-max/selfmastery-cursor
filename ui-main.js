@@ -389,10 +389,8 @@ function renderJourneyMilestones() {
     [75, 100, 150].forEach(day => {
         const item   = document.getElementById(`jm-${day}`);
         const statEl = item ? item.querySelector('.milestone-status') : null;
-        const reached = s >= day;
-        const count   = state.journeyMilestones[day] || 0;
-        if (item) setMilestoneState(item, reached ? 'achieved-glow' : null);
-        if (statEl) statEl.textContent = reached ? (count > 0 ? count : '✓') : '0';
+        if (item) setMilestoneState(item, shouldJourneyMilestoneGlow(day, s) ? 'achieved-glow' : null);
+        if (statEl) statEl.textContent = formatJourneyMilestoneStatus(day, s);
     });
 
     // ── Endurance — progressive reveal ─────────────────
@@ -407,11 +405,9 @@ function renderJourneyMilestones() {
         endEl.innerHTML = '';
         let teaserShown = false;
         for (const m of ENDURANCE) {
-            if (s >= m.unlockAt) {
-                const reached = s >= m.day;
-                const count   = state.journeyMilestones[m.day] || 0;
-                const cls     = reached ? 'milestone-item achieved-glow' : 'milestone-item';
-                const status  = reached ? (count > 0 ? count : '✓') : '0';
+            if (isJourneyMilestoneRevealed(m.unlockAt)) {
+                const cls    = shouldJourneyMilestoneGlow(m.day, s) ? 'milestone-item achieved-glow' : 'milestone-item';
+                const status = formatJourneyMilestoneStatus(m.day, s);
                 endEl.innerHTML += `
                     <div class="${cls}" style="margin-bottom:10px">
                         <div class="milestone-info">
@@ -441,17 +437,14 @@ function renderJourneyMilestones() {
     const legEl = document.getElementById('legendarySection');
     if (legEl) {
         legEl.innerHTML = '';
-        if (s < 400) {
-            // Full mystery — just a lock, nothing else
+        if (!isJourneyMilestoneRevealed(400)) {
             legEl.innerHTML = `<div class="mystery-lock"><span class="mystery-lock-icon">🔒</span></div>`;
         } else {
             let teaserShown = false;
             for (const m of LEGENDARY) {
-                if (s >= m.unlockAt) {
-                    const reached = s >= m.day;
-                    const count   = state.journeyMilestones[m.day] || 0;
-                    const cls     = reached ? 'milestone-item achieved-glow' : 'milestone-item';
-                    const status  = reached ? (count > 0 ? count : '✓') : '0';
+                if (isJourneyMilestoneRevealed(m.unlockAt)) {
+                    const cls    = shouldJourneyMilestoneGlow(m.day, s) ? 'milestone-item achieved-glow' : 'milestone-item';
+                    const status = formatJourneyMilestoneStatus(m.day, s);
                     legEl.innerHTML += `
                         <div class="${cls}" style="margin-bottom:10px">
                             <div class="milestone-info">
